@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>統計グラフ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #eef2f7;
+      text-align: center;
+    }
+    input {
+      margin: 0.5rem;
+      padding: 0.4rem;
+    }
+    canvas {
+      max-width: 700px;
+      margin: 2rem auto;
+    }
+    nav {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <nav style="margin-top: 2rem; text-align: center;">
+    <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
+    <a href="気分の記録_保存先.html">記録一覧</a> |
+    <a href="気分の記録_グラフ.html">統計グラフ</a>
+  </nav>
+　<br>
+  <h1>気分統計グラフ（期間指定）</h1>
+  <label>開始日: <input type="date" id="startDate"></label>
+  <label>終了日: <input type="date" id="endDate"></label>
+  <button onclick="filterAndRender()">更新</button>
+
+  <canvas id="moodChart"></canvas>
+
+  <script>
+    const rawLogs = JSON.parse(localStorage.getItem("moodLogs")) || [];
+
+    function filterAndRender() {
+      const start = new Date(document.getElementById('startDate').value);
+      const end = new Date(document.getElementById('endDate').value);
+      end.setHours(23, 59, 59, 999); // include end of day
+
+      const filtered = rawLogs.filter(log => {
+        const logDate = new Date(log.date);
+        return (!isNaN(start) && !isNaN(end)) ? logDate >= start && logDate <= end : true;
+      });
+
+      const moodCounts = {
+        'とても良い': 0,
+        '良い': 0,
+        '普通': 0,
+        '悪い': 0,
+        'とても悪い': 0
+      };
+
+      filtered.forEach(log => {
+        if (moodCounts.hasOwnProperty(log.mood)) {
+          moodCounts[log.mood]++;
+        }
+      });
+
+      renderChart(Object.keys(moodCounts), Object.values(moodCounts));
+    }
+
+    let chart;
+
+    function renderChart(labels, data) {
+      const ctx = document.getElementById('moodChart').getContext('2d');
+
+      if (chart) chart.destroy(); // 再描画のため一度破棄
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '選択回数',
+            data,
+            backgroundColor: ['#4caf50', '#8bc34a', '#ffc107', '#ff9800', '#f44336']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            }
+          }
+        }
+      });
+    }
+
+    // 初期描画（全期間）
+    window.onload = () => filterAndRender();
+  </script>
+</body>
+</html>
