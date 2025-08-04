@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>記録一覧</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #f7f9fc;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    nav {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <h1>記録一覧</h1>
+  <nav style="margin-top: 2rem; text-align: center;">
+    <a href="今日の気分_記録.html">入力ページ</a> |
+    <a href="気分の記録_保存先.html">記録一覧</a> |
+    <a href="気分の記録_グラフ.html">統計グラフ</a>
+  </nav>
+　<br>
+  <table>
+    <thead>
+      <tr>
+        <th>日時</th>
+        <th>気分</th>
+        <th>大カテゴリ</th>
+        <th>中カテゴリ</th>
+        <th>メモ</th>
+      </tr>
+    </thead>
+    <tbody id="log-table-body"></tbody>
+  </table>
+
+  <script>
+    const logs = JSON.parse(localStorage.getItem("moodLogs")) || [];
+    const tableBody = document.getElementById("log-table-body");
+
+    logs.forEach(log => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${log.date}</td>
+        <td>${log.mood}</td>
+        <td>${log.majorCategory}</td>
+        <td>${log.middleCategory}</td>
+        <td>${log.freeText || ""}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  </script>
+</body>
+</html>
