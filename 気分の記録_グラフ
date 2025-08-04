@@ -32,7 +32,7 @@
 </head>
 <body>
   <nav style="margin-top: 2rem; text-align: center;">
-    <a href="今日の気分_記録.html">入力ページ</a> |
+    <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
     <a href="気分の記録_保存先.html">記録一覧</a> |
     <a href="気分の記録_グラフ.html">統計グラフ</a>
   </nav>
