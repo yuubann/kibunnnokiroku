@@ -1,1 +1,358 @@
-# kibunnnokiroku
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日の気分</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .category-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .category-button.active {
+            background-color: #004a99;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* プルダウンメニューのコンテナ */
+        .dropdown-menu {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 1rem;
+            flex-direction: column;
+        }
+        
+        /* モバイル表示用の調整 */
+        @media (min-width: 600px) {
+            .dropdown-menu {
+                flex-direction: column;
+            }
+        }
+
+        /* プルダウン（select要素）のスタイル */
+        .dropdown-menu select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #fff;
+        }
+
+        /* 非活性状態のプルダウン */
+        .dropdown-menu select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* 非表示にするためのクラス */
+        .hidden {
+            display: none;
+        }
+
+        .free-text {
+            padding: 1rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .middle-and-text {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 0.5rem;
+        }
+
+    nav {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>今日の気分はどうですか？</h1>
+            <div class="date" id="currentDate"></div>
+        </div>
+  <nav style="margin-top: 2rem; text-align: center;">
+    <a href="今日の気分_記録.html">入力ページ</a> |
+    <a href="気分の記録_保存先.html">記録一覧</a> |
+    <a href="気分の記録_グラフ.html">統計グラフ</a>
+  </nav>
+　<br>
+    <div class="button-container">
+        <button class="category-button" data-target="dropdown1">とても良い</button>
+        <button class="category-button" data-target="dropdown2">良い</button>
+        <button class="category-button" data-target="dropdown3">普通</button>
+        <button class="category-button" data-target="dropdown4">悪い</button>
+        <button class="category-button" data-target="dropdown5">とても悪い</button>
+    </div>
+    <!-- 5つのプルダウンメニュー（最初は非表示） -->
+    <div id="dropdown1" class="dropdown-menu hidden">
+        <select class="major-category">
+            <option value="">原因を選択</option>
+        </select>
+        <select class="middle-category" disabled>
+            <option value="">具体的には？</option>
+        </select>
+       <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+      <button class="submit-button hidden">送信</button>
+    </div>
+    <div id="dropdown2" class="dropdown-menu hidden">
+        <select class="major-category">
+            <option value="">原因を選択</option>
+        </select>
+        <select class="middle-category" disabled>
+            <option value="">具体的には？</option>
+        </select>
+        <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+      <button class="submit-button hidden">送信</button>
+    </div>
+    <div id="dropdown3" class="dropdown-menu hidden">
+        <select class="major-category">
+            <option value="">原因を選択</option>
+        </select>
+        <select class="middle-category" disabled>
+            <option value="">具体的には？</option>
+        </select>
+        <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+      <button class="submit-button hidden">送信</button>
+    </div>
+    <div id="dropdown4" class="dropdown-menu hidden">
+        <select class="major-category">
+            <option value="">原因を選択</option>
+        </select>
+        <select class="middle-category" disabled>
+            <option value="">具体的には？</option>
+        </select>
+       <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+      <button class="submit-button hidden">送信</button>
+    </div>
+    <div id="dropdown5" class="dropdown-menu hidden">
+        <select class="major-category">
+            <option value="">原因を選択</option>
+        </select>
+        <select class="middle-category" disabled>
+            <option value="">具体的には？</option>
+        </select>
+       <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+      <button class="submit-button hidden">送信</button>
+    </div>
+</div>
+
+
+    <script>
+    (function() {
+        // 日付表示
+        document.getElementById('currentDate').textContent = 
+            new Date().toLocaleDateString('ja-JP', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            });
+
+        const categoryData = {
+            '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲みすぎ','その他'],
+            '仕事・学業が原因': ['仕事が忙しい','仕事が上手くいっている','タスクが多い', 'タスクが丁度いい','タスクが少ない', 'プレッシャーがある','人間関係ストレスがある','人間関係が快適','通勤ストレス','通勤が快適','その他'],
+            '環境・天候が原因': ['天気が悪い','天気がいい', '暑すぎる', '寒すぎる','丁度いい','気圧変化','湿度が高い','湿度が低い','花粉','騒音','その他'],
+            'ストレス、心理的要因': ['不安がある','快適である', 'イライラする','わくわくする', '憂鬱である', '心配事がある','心配事が消えた','人間関係ストレスがある','人間関係が快適','その他'],
+            '体調・健康が原因': ['調子がいい', '風邪気味である', '頭痛がする', '胃腸不調','生理・ホルモン','アレルギー','その他']
+        };
+
+        const buttons = document.querySelectorAll('.category-button');
+        const dropdowns = document.querySelectorAll('.dropdown-menu');
+        const majorCategorySelects = document.querySelectorAll('.major-category');
+
+        majorCategorySelects.forEach(select => {
+            for (const majorCategory in categoryData) {
+                const option = document.createElement('option');
+                option.value = majorCategory;
+                option.textContent = majorCategory;
+                select.appendChild(option);
+            }
+        });
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetId = button.dataset.target;
+                const targetDropdown = document.getElementById(targetId);
+
+                dropdowns.forEach(dropdown => {
+                    if (dropdown.id !== targetId) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+                buttons.forEach(btn => {
+                    if (btn !== button) {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                targetDropdown.classList.toggle('hidden');
+                button.classList.toggle('active');
+            });
+        });
+
+        majorCategorySelects.forEach(select => {
+            select.addEventListener('change', (event) => {
+                const selectedMajorCategory = event.target.value;
+                const middleCategorySelect = event.target.nextElementSibling;
+
+                middleCategorySelect.innerHTML = '<option value="">中カテゴリを選択</option>';
+                middleCategorySelect.disabled = true;
+
+                if (selectedMajorCategory) {
+                    const middleCategories = categoryData[selectedMajorCategory];
+                    middleCategories.forEach(middleCategory => {
+                        const option = document.createElement('option');
+                        option.value = middleCategory;
+                        option.textContent = middleCategory;
+                        middleCategorySelect.appendChild(option);
+                    });
+
+                    middleCategorySelect.disabled = false;
+                }
+            });
+        });
+    })();
+
+const middleCategorySelects = document.querySelectorAll('.middle-category');
+
+middleCategorySelects.forEach(select => {
+    select.addEventListener('change', (event) => {
+        const dropdownMenu = event.target.closest('.dropdown-menu');
+        const freeText = dropdownMenu.querySelector('.free-text');
+        const submitButton = dropdownMenu.querySelector('.submit-button'); // 送信ボタンを取得
+
+        if (event.target.value) {
+            // 中カテゴリが選ばれたら、テキストエリアと送信ボタンを表示
+            freeText.classList.remove('hidden');
+            submitButton.classList.remove('hidden');
+        } else {
+            // 中カテゴリが未選択なら、両方非表示
+            freeText.classList.add('hidden');
+            submitButton.classList.add('hidden');
+        }
+    });
+});
+
+// データを記録するための配列
+let logs = JSON.parse(localStorage.getItem("moodLogs")) || [];
+
+const submitButtons = document.querySelectorAll('.submit-button');
+const dropdowns = document.querySelectorAll('.dropdown-menu');
+
+
+// 各送信ボタンの処理
+submitButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const dropdown = button.closest('.dropdown-menu');
+        const moodButton = document.querySelector(`.category-button.active`);
+        const moodLabel = moodButton ? moodButton.textContent : "未選択";
+
+        const majorCategory = dropdown.querySelector('.major-category').value;
+        const middleCategory = dropdown.querySelector('.middle-category').value;
+        const freeText = dropdown.querySelector('.free-text').value;
+
+        const entry = {
+            date: new Date().toLocaleString(),
+            mood: moodLabel,
+            majorCategory,
+            middleCategory,
+            freeText
+        };
+
+        logs.push(entry);
+        console.log("記録されました:", entry);
+
+        alert("記録しました！");
+
+        // ローカルストレージにも保存（永続化）
+        localStorage.setItem("moodLogs", JSON.stringify(logs));
+
+        // フォームをリセット
+        dropdown.querySelector('.major-category').value = '';
+        dropdown.querySelector('.middle-category').innerHTML = '<option value="">具体的には？</option>';
+        dropdown.querySelector('.middle-category').disabled = true;
+        dropdown.querySelector('.free-text').value = '';
+        dropdown.querySelector('.free-text').classList.add('hidden');
+        button.classList.add('hidden');
+        moodButton.classList.remove('active');
+        dropdown.classList.add('hidden');
+    });
+});
+
+</script>
+
+</body>
+</html>
