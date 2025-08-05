@@ -46,6 +46,13 @@
     <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
   </nav>
 　<br>
+<label for="start-date">開始日:</label>
+<input type="date" id="start-date">
+<label for="end-date">終了日:</label>
+<input type="date" id="end-date">
+<button onclick="filterByDateRange()">検索</button>
+<button onclick="resetFilter()">リセット</button>
+<br><br>
   <table>
     <thead>
       <tr>
@@ -74,7 +81,80 @@
       `;
       tableBody.appendChild(row);
     });
+
+function renderTable(filteredLogs) {
+  tableBody.innerHTML = ""; // テーブル初期化
+  filteredLogs.forEach(log => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><input type="datetime-local" value="${formatForInput(log.date)}" onchange="updateLog(${index}, 'date', this.value)"></td>
+      <td><input value="${log.mood}" onchange="updateLog(${index}, 'mood', this.value)"></td>
+      <td><input value="${log.majorCategory}" onchange="updateLog(${index}, 'majorCategory', this.value)"></td>
+      <td><input value="${log.middleCategory}" onchange="updateLog(${index}, 'middleCategory', this.value)"></td>
+      <td><input value="${log.freeText || ""}" onchange="updateLog(${index}, 'freeText', this.value)"></td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+  localStorage.setItem("moodLogs", JSON.stringify(logs));
+}
+
+function updateLog(index, key, value) {
+  logs[index][key] = value;
+  localStorage.setItem("moodLogs", JSON.stringify(logs));
+}
+
+// 日付の変換（"2025/08/05 10:12:34" → "2025-08-05T10:12"）
+function formatForInput(dateStr) {
+  const d = new Date(dateStr);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function filterByDateRange() {
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
+
+  if (!startDate && !endDate) {
+    return renderTable(logs);
+  }
+
+  const filtered = logs.filter(log => {
+    const logDate = new Date(log.date);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
+    if (start && end) {
+      return logDate >= start && logDate <= new Date(end.getTime() + 86400000 - 1); // 終了日の23:59:59まで含める
+    } else if (start) {
+      return logDate >= start;
+    } else if (end) {
+      return logDate <= new Date(end.getTime() + 86400000 - 1);
+    }
+    return true;
+  });
+
+  renderTable(filtered);
+
+function resetFilter() {
+  document.getElementById("search-date").value = "";
+  renderTable(logs);
+}
+
+// 初期表示
+renderTable(logs);
+
+
+
+
+
   </script>
 </body>
 </html>
+
 
