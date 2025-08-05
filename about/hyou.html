@@ -69,43 +69,79 @@
 <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js"></script>
 
-<script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
-    apiKey: "xxxxxx",
-    authDomain: "xxxx.firebaseapp.com",
-    databaseURL: "https://xxxx.firebaseio.com",
-    projectId: "xxxx",
-    storageBucket: "xxxx.appspot.com",
-    messagingSenderId: "xxx",
-    appId: "xxx"
+    apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
+    authDomain: "kibunnnokiroku.firebaseapp.com",
+    databaseURL: "https://kibunnnokiroku-default-rtdb.firebaseio.com",
+    projectId: "kibunnnokiroku",
+    storageBucket: "kibunnnokiroku.firebasestorage.app",
+    messagingSenderId: "385335029995",
+    appId: "1:385335029995:web:35728204be94704f350eae",
+    measurementId: "G-HRTWT7EHBP"
   };
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
 
-  let logs = [];
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
 
-  const tableBody = document.getElementById("log-table-body");
+let logs = []; // { key: 'ユニークID', data: {記録内容} } の形式で保存
 
-  function renderTable(filteredLogs) {
+firebase.database().ref("moodLogs").once("value").then(snapshot => {
+    const logsData = snapshot.val() || {};
+    logs = []; // 配列を初期化
+    snapshot.forEach(childSnapshot => {
+        logs.push({
+            key: childSnapshot.key, // ← ユニークIDを保持
+            data: childSnapshot.val()
+        });
+    });
+    // 日付の降順（新しいものが上）に並び替え
+    logs.sort((a, b) => new Date(b.data.date) - new Date(a.data.date));
+    renderTable(logs);
+});
+
+function renderTable(filteredLogs) {
     tableBody.innerHTML = "";
     filteredLogs.forEach((log, index) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td><input type="datetime-local" value="${formatForInput(log.date)}" onchange="updateLog(${index}, 'date', this.value)"></td>
-        <td><input value="${log.mood}" onchange="updateLog(${index}, 'mood', this.value)"></td>
-        <td><input value="${log.majorCategory}" onchange="updateLog(${index}, 'majorCategory', this.value)"></td>
-        <td><input value="${log.middleCategory}" onchange="updateLog(${index}, 'middleCategory', this.value)"></td>
-        <td><input value="${log.freeText || ""}" onchange="updateLog(${index}, 'freeText', this.value)"></td>
-      `;
-      tableBody.appendChild(row);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td><input type="datetime-local" value="${formatForInput(log.data.date)}" onchange="updateLog(${index}, 'date', this.value)"></td>
+            <td><input value="${log.data.mood}" onchange="updateLog(${index}, 'mood', this.value)"></td>
+            <td><input value="${log.data.majorCategory}" onchange="updateLog(${index}, 'majorCategory', this.value)"></td>
+            <td><input value="${log.data.middleCategory}" onchange="updateLog(${index}, 'middleCategory', this.value)"></td>
+            <td><input value="${log.data.freeText || ""}" onchange="updateLog(${index}, 'freeText', this.value)"></td>
+        `;
+        tableBody.appendChild(row);
     });
-  }
+}
 
-  function updateLog(index, key, value) {
-    logs[index][key] = value;
-    renderTable(logs); // ローカルの表示を即時更新
-　　firebase.database().ref("moodLogs").set(logs);
-  }
+function updateLog(index, field, value) {
+    const logToUpdate = logs[index]; // 更新対象のログを取得
+    const updatedField = { [field]: value };
+
+    // Firebase上の特定のキーを持つデータを更新
+    firebase.database().ref("moodLogs/" + logToUpdate.key).update(updatedField)
+        .then(() => {
+            // ローカルのデータも更新
+            logToUpdate.data[field] = value;
+            console.log("更新成功:", logToUpdate.key, updatedField);
+        })
+        .catch(error => {
+            console.error("更新失敗:", error);
+            alert("データの更新に失敗しました。");
+            // 失敗した場合はページをリロードして再同期するなどの対応
+            location.reload();
+        });
+}
 
 
 // 日付の変換（"2025/08/05 10:12:34" → "2025-08-05T10:12"）
@@ -151,13 +187,6 @@ function resetFilter() {
   document.getElementById("end-date").value = "";
   renderTable(logs);
 }
-
-  firebase.database().ref("moodLogs").once("value").then(snapshot => {
-    logs = Object.values(snapshot.val() || {});
-    renderTable(logs);
-  });
-
-
 
   </script>
 </body>
