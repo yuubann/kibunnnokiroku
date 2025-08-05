@@ -44,8 +44,36 @@
 
   <canvas id="moodChart"></canvas>
 
-  <script>
-    const rawLogs = JSON.parse(localStorage.getItem("moodLogs")) || [];
+
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "your-project-id.firebaseapp.com",
+    databaseURL: "https://your-project-id.firebaseio.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project-id.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:xxxxxxxxxxxx"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+let rawLogs = [];
+
+function fetchFromFirebaseAndRender() {
+  firebase.database().ref("moodLogs").once("value")
+    .then(snapshot => {
+      rawLogs = Object.values(snapshot.val() || []);
+      filterAndRender();
+    })
+    .catch(error => {
+      console.error("Firebaseからの読み込みに失敗:", error);
+      renderChart([], []);
+    });
+}
 
     function filterAndRender() {
       const start = new Date(document.getElementById('startDate').value);
@@ -104,8 +132,7 @@
     }
 
     // 初期描画（全期間）
-    window.onload = () => filterAndRender();
+    window.onload = () => fetchFromFirebaseAndRender();
   </script>
 </body>
 </html>
-
