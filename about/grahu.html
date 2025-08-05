@@ -49,14 +49,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js"></script>
 <script>
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "your-project-id.firebaseapp.com",
-    databaseURL: "https://your-project-id.firebaseio.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project-id.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:xxxxxxxxxxxx"
+    apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
+    authDomain: "kibunnnokiroku.firebaseapp.com",
+    databaseURL: "https://kibunnnokiroku-default-rtdb.firebaseio.com",
+    projectId: "kibunnnokiroku",
+    storageBucket: "kibunnnokiroku.firebasestorage.app",
+    messagingSenderId: "385335029995",
+    appId: "1:385335029995:web:35728204be94704f350eae",
+    measurementId: "G-HRTWT7EHBP"
   };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
 
   firebase.initializeApp(firebaseConfig);
   const database = firebase.database();
