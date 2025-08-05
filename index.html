@@ -227,14 +227,10 @@
 
 <script>
     (function() {
-        // 日付表示
-        document.getElementById('currentDate').textContent = 
-            new Date().toLocaleDateString('ja-JP', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                weekday: 'long'
-            });
+        // ISO形式の日付表示
+        const now = new Date();
+        // ISO形式（YYYY-MM-DD）で表示
+        document.getElementById('currentDate').textContent = now.toISOString().split('T')[0];
 
         const categoryData = {
             '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲みすぎ','その他'],
