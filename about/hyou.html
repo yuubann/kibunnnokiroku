@@ -66,44 +66,47 @@
     <tbody id="log-table-body"></tbody>
   </table>
 
-  <script>
-    const logs = JSON.parse(localStorage.getItem("moodLogs")) || [];
-    const tableBody = document.getElementById("log-table-body");
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js"></script>
 
-    logs.forEach(log => {
+<script>
+  const firebaseConfig = {
+    apiKey: "xxxxxx",
+    authDomain: "xxxx.firebaseapp.com",
+    databaseURL: "https://xxxx.firebaseio.com",
+    projectId: "xxxx",
+    storageBucket: "xxxx.appspot.com",
+    messagingSenderId: "xxx",
+    appId: "xxx"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  let logs = [];
+
+  const tableBody = document.getElementById("log-table-body");
+
+  function renderTable(filteredLogs) {
+    tableBody.innerHTML = "";
+    filteredLogs.forEach((log, index) => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td>${log.date}</td>
-        <td>${log.mood}</td>
-        <td>${log.majorCategory}</td>
-        <td>${log.middleCategory}</td>
-        <td>${log.freeText || ""}</td>
+        <td><input type="datetime-local" value="${formatForInput(log.date)}" onchange="updateLog(${index}, 'date', this.value)"></td>
+        <td><input value="${log.mood}" onchange="updateLog(${index}, 'mood', this.value)"></td>
+        <td><input value="${log.majorCategory}" onchange="updateLog(${index}, 'majorCategory', this.value)"></td>
+        <td><input value="${log.middleCategory}" onchange="updateLog(${index}, 'middleCategory', this.value)"></td>
+        <td><input value="${log.freeText || ""}" onchange="updateLog(${index}, 'freeText', this.value)"></td>
       `;
       tableBody.appendChild(row);
     });
+  }
 
-function renderTable(filteredLogs) {
-  tableBody.innerHTML = ""; // テーブル初期化
-  filteredLogs.forEach(log => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td><input type="datetime-local" value="${formatForInput(log.date)}" onchange="updateLog(${index}, 'date', this.value)"></td>
-      <td><input value="${log.mood}" onchange="updateLog(${index}, 'mood', this.value)"></td>
-      <td><input value="${log.majorCategory}" onchange="updateLog(${index}, 'majorCategory', this.value)"></td>
-      <td><input value="${log.middleCategory}" onchange="updateLog(${index}, 'middleCategory', this.value)"></td>
-      <td><input value="${log.freeText || ""}" onchange="updateLog(${index}, 'freeText', this.value)"></td>
-    `;
-    tableBody.appendChild(row);
-  });
-}
+  function updateLog(index, key, value) {
+    logs[index][key] = value;
+    renderTable(logs); // ローカルの表示を即時更新
+　　firebase.database().ref("moodLogs").set(logs);
+  }
 
-  localStorage.setItem("moodLogs", JSON.stringify(logs));
-}
-
-function updateLog(index, key, value) {
-  logs[index][key] = value;
-  localStorage.setItem("moodLogs", JSON.stringify(logs));
-}
 
 // 日付の変換（"2025/08/05 10:12:34" → "2025-08-05T10:12"）
 function formatForInput(dateStr) {
@@ -122,6 +125,7 @@ function filterByDateRange() {
 
   if (!startDate && !endDate) {
     return renderTable(logs);
+    return;
   }
 
   const filtered = logs.filter(log => {
@@ -140,21 +144,21 @@ function filterByDateRange() {
   });
 
   renderTable(filtered);
+}
 
 function resetFilter() {
-  document.getElementById("search-date").value = "";
+  document.getElementById("start-date").value = "";
+  document.getElementById("end-date").value = "";
   renderTable(logs);
 }
 
-// 初期表示
-renderTable(logs);
-
-
+  firebase.database().ref("moodLogs").once("value").then(snapshot => {
+    logs = Object.values(snapshot.val() || {});
+    renderTable(logs);
+  });
 
 
 
   </script>
 </body>
 </html>
-
-
