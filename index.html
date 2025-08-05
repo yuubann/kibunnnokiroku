@@ -135,6 +135,22 @@
       color: #007bff;
     }
     </style>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
+    authDomain: "kibunnnokiroku.firebaseapp.com",
+    databaseURL: "https://kibunnnokiroku-default-rtdb.firebaseio.com",
+    projectId: "kibunnnokiroku",
+    storageBucket: "kibunnnokiroku.firebasestorage.app",
+    messagingSenderId: "385335029995",
+    appId: "1:385335029995:web:35728204be94704f350eae",
+    measurementId: "G-HRTWT7EHBP"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+</script>
 </head>
 <body>
     <div class="container">
@@ -209,7 +225,7 @@
 </div>
 
 
-    <script>
+<script>
     (function() {
         // 日付表示
         document.getElementById('currentDate').textContent = 
@@ -312,6 +328,11 @@ let logs = JSON.parse(localStorage.getItem("moodLogs")) || [];
 const submitButtons = document.querySelectorAll('.submit-button');
 const dropdowns = document.querySelectorAll('.dropdown-menu');
 
+// Firebase に push する関数
+function saveLogToFirebase(entry) {
+  firebase.database().ref("moodLogs").push(entry);
+}
+
 
 // 各送信ボタンの処理
 submitButtons.forEach(button => {
@@ -333,12 +354,14 @@ submitButtons.forEach(button => {
         };
 
         logs.push(entry);
+
         console.log("記録されました:", entry);
 
         alert("記録しました！");
 
         // ローカルストレージにも保存（永続化）
         localStorage.setItem("moodLogs", JSON.stringify(logs));
+        firebase.database().ref("moodLogs").push(entry);
 
         // フォームをリセット
         dropdown.querySelector('.major-category').value = '';
@@ -353,6 +376,7 @@ submitButtons.forEach(button => {
 });
 
 </script>
+
 
 </body>
 </html>
