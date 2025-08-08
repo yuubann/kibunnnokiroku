@@ -22,6 +22,7 @@
       padding: 0.75rem;
       border: 1px solid #ccc;
       text-align: left;
+      vertical-align: top;
     }
     th {
       background-color: #007bff;
@@ -49,6 +50,43 @@
       border-radius: 4px;
       margin: 1rem 0;
       text-align: center;
+    }
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 200px;
+    }
+    .edit-form select, .edit-form textarea, .edit-form input {
+      padding: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .edit-form textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+    .mood-select {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+    }
+    .save-button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .save-button:hover {
+      background-color: #218838;
+    }
+    .timestamp-cell {
+      background-color: #f8f9fa;
+      font-weight: 500;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -102,6 +140,15 @@
 
   // ⭐ 修正：Compatibility SDKの正しい初期化方法
   firebase.initializeApp(firebaseConfig);
+
+  // カテゴリデータ（記録ページと同じ）
+  const categoryData = {
+    '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲みすぎ','その他'],
+    '仕事・学業が原因': ['仕事が忙しい','仕事が上手くいっている','タスクが多い', 'タスクが丁度いい','タスクが少ない', 'プレッシャーがある','人間関係ストレスがある','人間関係が快適','通勤ストレス','通勤が快適','その他'],
+    '環境・天候が原因': ['天気が悪い','天気がいい', '暑すぎる', '寒すぎる','丁度いい','気圧変化','湿度が高い','湿度が低い','花粉','騒音','その他'],
+    'ストレス、心理的要因': ['不安がある','快適である', 'イライラする','わくわくする', '憂鬱である', '心配事がある','心配事が消えた','人間関係ストレスがある','人間関係が快適','その他'],
+    '体調・健康が原因': ['調子がいい', '風邪気味である', '頭痛がする', '胃腸不調','生理・ホルモン','アレルギー','その他']
+  };
 
   let logs = [];
   let filteredLogs = [];
@@ -166,21 +213,75 @@
       return;
     }
     
-    filteredLogs.forEach(log => {
+    filteredLogs.forEach((log, index) => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td style="padding: 0.75rem; background-color: #f8f9fa;">
-          <div style="font-size: 14px; color: #333; font-weight: 500;">
-            ${formatToJapaneseDateTime(log.data.timestamp || log.data.date)}
+        <td class="timestamp-cell">
+          ${formatToJapaneseDateTime(log.data.timestamp || log.data.date)}
+        </td>
+        <td>
+          <div class="edit-form">
+            <select class="mood-select" onchange="updateLog('${log.key}', 'mood', this.value)">
+              <option value="とても良い" ${log.data.mood === 'とても良い' ? 'selected' : ''}>とても良い</option>
+              <option value="良い" ${log.data.mood === '良い' ? 'selected' : ''}>良い</option>
+              <option value="普通" ${log.data.mood === '普通' ? 'selected' : ''}>普通</option>
+              <option value="悪い" ${log.data.mood === '悪い' ? 'selected' : ''}>悪い</option>
+              <option value="とても悪い" ${log.data.mood === 'とても悪い' ? 'selected' : ''}>とても悪い</option>
+            </select>
           </div>
         </td>
-        <td><input value="${log.data.mood || ''}" onchange="updateLog('${log.key}', 'mood', this.value)"></td>
-        <td><input value="${log.data.majorCategory || ''}" onchange="updateLog('${log.key}', 'majorCategory', this.value)"></td>
-        <td><input value="${log.data.middleCategory || ''}" onchange="updateLog('${log.key}', 'middleCategory', this.value)"></td>
-        <td><input value="${log.data.freeText || ''}" onchange="updateLog('${log.key}', 'freeText', this.value)"></td>
+        <td>
+          <div class="edit-form">
+            <select class="major-category-select" onchange="handleMajorCategoryChange('${log.key}', this.value, ${index})">
+              <option value="">原因を選択</option>
+              ${Object.keys(categoryData).map(major => 
+                `<option value="${major}" ${log.data.majorCategory === major ? 'selected' : ''}>${major}</option>`
+              ).join('')}
+            </select>
+          </div>
+        </td>
+        <td>
+          <div class="edit-form">
+            <select class="middle-category-select" id="middle-${index}" onchange="updateLog('${log.key}', 'middleCategory', this.value)">
+              <option value="">具体的には？</option>
+              ${log.data.majorCategory && categoryData[log.data.majorCategory] ? 
+                categoryData[log.data.majorCategory].map(middle => 
+                  `<option value="${middle}" ${log.data.middleCategory === middle ? 'selected' : ''}>${middle}</option>`
+                ).join('') : ''
+              }
+            </select>
+          </div>
+        </td>
+        <td>
+          <div class="edit-form">
+            <textarea placeholder="メモ（任意）" onchange="updateLog('${log.key}', 'freeText', this.value)">${log.data.freeText || ''}</textarea>
+          </div>
+        </td>
       `;
       tableBody.appendChild(row);
     });
+  }
+
+  // 大カテゴリ変更時の処理
+  function handleMajorCategoryChange(key, selectedMajorCategory, rowIndex) {
+    // 大カテゴリを更新
+    updateLog(key, 'majorCategory', selectedMajorCategory);
+    
+    // 中カテゴリをリセット
+    updateLog(key, 'middleCategory', '');
+    
+    // 中カテゴリのプルダウンを更新
+    const middleSelect = document.getElementById(`middle-${rowIndex}`);
+    middleSelect.innerHTML = '<option value="">具体的には？</option>';
+    
+    if (selectedMajorCategory && categoryData[selectedMajorCategory]) {
+      categoryData[selectedMajorCategory].forEach(middleCategory => {
+        const option = document.createElement('option');
+        option.value = middleCategory;
+        option.textContent = middleCategory;
+        middleSelect.appendChild(option);
+      });
+    }
   }
 
   function updateLog(key, field, value) {
@@ -278,4 +379,3 @@
 </script>
 </body>
 </html>
-
