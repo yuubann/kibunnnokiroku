@@ -169,11 +169,10 @@
     filteredLogs.forEach(log => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td>
-          <div style="margin-bottom: 4px; font-size: 14px; color: #333;">
+        <td style="padding: 0.75rem; background-color: #f8f9fa;">
+          <div style="font-size: 14px; color: #333; font-weight: 500;">
             ${formatToJapaneseDateTime(log.data.timestamp || log.data.date)}
           </div>
-          <input type="datetime-local" value="${formatForInput(log.data.timestamp || log.data.date)}" onchange="updateLog('${log.key}', 'timestamp', this.value)" style="width: 100%; font-size: 12px;">
         </td>
         <td><input value="${log.data.mood || ''}" onchange="updateLog('${log.key}', 'mood', this.value)"></td>
         <td><input value="${log.data.majorCategory || ''}" onchange="updateLog('${log.key}', 'majorCategory', this.value)"></td>
@@ -191,35 +190,14 @@
       return;
     }
     
-    let updatedField;
-    
-    // 日時の更新の場合、timestampとdateの両方を更新
-    if (field === 'timestamp') {
-      const isoValue = new Date(value).toISOString();
-      updatedField = { 
-        timestamp: isoValue,
-        date: isoValue
-      };
-    } else {
-      updatedField = { [field]: value };
-    }
+    const updatedField = { [field]: value };
 
     // Firebase上のデータを更新
     firebase.database().ref("moodLogs/" + key).update(updatedField)
       .then(() => {
         // ローカルのデータも更新
-        if (field === 'timestamp') {
-          logToUpdate.data.timestamp = updatedField.timestamp;
-          logToUpdate.data.date = updatedField.date;
-        } else {
-          logToUpdate.data[field] = value;
-        }
+        logToUpdate.data[field] = value;
         console.log("更新成功:", key, updatedField);
-        
-        // 日時更新の場合は表示を更新
-        if (field === 'timestamp') {
-          renderTable(filteredLogs.length > 0 ? filteredLogs : logs);
-        }
       })
       .catch(error => {
         console.error("更新失敗:", error);
@@ -249,19 +227,6 @@
     } catch (error) {
       console.error("日付フォーマットエラー:", error, isoString);
       return "日付エラー";
-    }
-  }
-
-  // 日付の変換（ISO文字列 → datetime-localの形式）
-  function formatForInput(isoString) {
-    if (!isoString) return "";
-    
-    try {
-      // ISO文字列から最初の16文字（YYYY-MM-DDTHH:mm）を取得
-      return isoString.slice(0, 16);
-    } catch (error) {
-      console.error("日付変換エラー:", error, isoString);
-      return "";
     }
   }
 
@@ -313,3 +278,4 @@
 </script>
 </body>
 </html>
+
