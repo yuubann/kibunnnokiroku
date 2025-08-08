@@ -36,6 +36,20 @@
       text-decoration: none;
       color: #007bff;
     }
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.2rem;
+      color: #666;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -45,7 +59,7 @@
     <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
     <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
   </nav>
-　<br>
+ <br>
 <label for="start-date">開始日:</label>
 <input type="date" id="start-date">
 <label for="end-date">終了日:</label>
@@ -53,24 +67,28 @@
 <button onclick="filterByDateRange()">検索</button>
 <button onclick="resetFilter()">リセット</button>
 <br><br>
-  <table>
-    <thead>
-      <tr>
-        <th>日時</th>
-        <th>気分</th>
-        <th>大カテゴリ</th>
-        <th>中カテゴリ</th>
-        <th>メモ</th>
-      </tr>
-    </thead>
-    <tbody id="log-table-body"></tbody>
-  </table>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<div id="loading" class="loading">データを読み込み中...</div>
+<div id="error" class="error" style="display: none;"></div>
+
+<table style="display: none;" id="data-table">
+  <thead>
+    <tr>
+      <th>日時</th>
+      <th>気分</th>
+      <th>大カテゴリ</th>
+      <th>中カテゴリ</th>
+      <th>メモ</th>
+    </tr>
+  </thead>
+  <tbody id="log-table-body"></tbody>
+</table>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 
 <script>
-
+  // Firebase設定（Compatibility SDKを使用）
   const firebaseConfig = {
     apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
     authDomain: "kibunnnokiroku.firebaseapp.com",
@@ -82,106 +100,167 @@
     measurementId: "G-HRTWT7EHBP"
   };
 
-  // Initialize Firebase
+  // ⭐ 修正：Compatibility SDKの正しい初期化方法
   firebase.initializeApp(firebaseConfig);
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
 
-let logs = []; // { key: 'ユニークID', data: {記録内容} } の形式で保存
+  let logs = [];
+  let filteredLogs = [];
 
-firebase.database().ref("moodLogs").once("value").then(snapshot => {
-    const logsData = snapshot.val() || {};
-    logs = []; // 配列を初期化
-    snapshot.forEach(childSnapshot => {
-        logs.push({
-            key: childSnapshot.key, // ← ユニークIDを保持
+  const tableBody = document.getElementById("log-table-body");
+  const loadingDiv = document.getElementById("loading");
+  const errorDiv = document.getElementById("error");
+  const dataTable = document.getElementById("data-table");
+
+  // データ読み込み（エラーハンドリング強化）
+  function loadData() {
+    console.log("Firebase からデータを読み込み中...");
+    
+    firebase.database().ref("moodLogs").once("value")
+      .then(snapshot => {
+        console.log("Firebase データ取得成功");
+        
+        const logsData = snapshot.val() || {};
+        logs = [];
+        
+        snapshot.forEach(childSnapshot => {
+          logs.push({
+            key: childSnapshot.key,
             data: childSnapshot.val()
+          });
         });
-    });
-    // 日付の降順（新しいものが上）に並び替え
-    logs.sort((a, b) => new Date(b.data.date) - new Date(a.data.date));
-    renderTable(logs);
-});
-
-function renderTable(filteredLogs) {
-    tableBody.innerHTML = "";
-    filteredLogs.forEach((log, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td><input type="datetime-local" value="${formatForInput(log.data.date)}" onchange="updateLog(${index}, 'date', this.value)"></td>
-            <td><input value="${log.data.mood}" onchange="updateLog(${index}, 'mood', this.value)"></td>
-            <td><input value="${log.data.majorCategory}" onchange="updateLog(${index}, 'majorCategory', this.value)"></td>
-            <td><input value="${log.data.middleCategory}" onchange="updateLog(${index}, 'middleCategory', this.value)"></td>
-            <td><input value="${log.data.freeText || ""}" onchange="updateLog(${index}, 'freeText', this.value)"></td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
-
-function updateLog(index, field, value) {
-    const logToUpdate = logs[index]; // 更新対象のログを取得
-    const updatedField = { [field]: value };
-
-    // Firebase上の特定のキーを持つデータを更新
-    firebase.database().ref("moodLogs/" + logToUpdate.key).update(updatedField)
-        .then(() => {
-            // ローカルのデータも更新
-            logToUpdate.data[field] = value;
-            console.log("更新成功:", logToUpdate.key, updatedField);
-        })
-        .catch(error => {
-            console.error("更新失敗:", error);
-            alert("データの更新に失敗しました。");
-            // 失敗した場合はページをリロードして再同期するなどの対応
-            location.reload();
+        
+        console.log(`${logs.length} 件のデータを読み込みました`);
+        
+        // 日付の降順（新しいものが上）に並び替え
+        logs.sort((a, b) => {
+          const dateA = new Date(b.data.timestamp || b.data.date);
+          const dateB = new Date(a.data.timestamp || a.data.date);
+          return dateA - dateB;
         });
-}
-
-
-// 日付の変換（"2025/08/05 10:12:34" → "2025-08-05T10:12"）
-function formatForInput(dateStr) {
-  const d = new Date(dateStr);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mi = String(d.getMinutes()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-function filterByDateRange() {
-  const startDate = document.getElementById("start-date").value;
-  const endDate = document.getElementById("end-date").value;
-
-  if (!startDate && !endDate) {
-    return renderTable(logs);
-    return;
+        
+        // UIを更新
+        loadingDiv.style.display = "none";
+        errorDiv.style.display = "none";
+        dataTable.style.display = "table";
+        
+        renderTable(logs);
+      })
+      .catch(error => {
+        console.error("Firebase データ取得エラー:", error);
+        
+        // エラー表示
+        loadingDiv.style.display = "none";
+        errorDiv.style.display = "block";
+        errorDiv.textContent = `データの読み込みに失敗しました: ${error.message}`;
+        dataTable.style.display = "none";
+      });
   }
 
-  const filtered = logs.filter(log => {
-    const logDate = new Date(log.date);
-    const start = startDate ? new Date(startDate) : null;
-    const end = endDate ? new Date(endDate) : null;
-
-    if (start && end) {
-      return logDate >= start && logDate <= new Date(end.getTime() + 86400000 - 1); // 終了日の23:59:59まで含める
-    } else if (start) {
-      return logDate >= start;
-    } else if (end) {
-      return logDate <= new Date(end.getTime() + 86400000 - 1);
+  function renderTable(filteredLogs) {
+    tableBody.innerHTML = "";
+    
+    if (filteredLogs.length === 0) {
+      const row = document.createElement("tr");
+      row.innerHTML = '<td colspan="5" style="text-align: center; color: #666;">データがありません</td>';
+      tableBody.appendChild(row);
+      return;
     }
-    return true;
+    
+    filteredLogs.forEach(log => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="datetime-local" value="${formatForInput(log.data.timestamp || log.data.date)}" onchange="updateLog('${log.key}', 'date', this.value)"></td>
+        <td><input value="${log.data.mood || ''}" onchange="updateLog('${log.key}', 'mood', this.value)"></td>
+        <td><input value="${log.data.majorCategory || ''}" onchange="updateLog('${log.key}', 'majorCategory', this.value)"></td>
+        <td><input value="${log.data.middleCategory || ''}" onchange="updateLog('${log.key}', 'middleCategory', this.value)"></td>
+        <td><input value="${log.data.freeText || ''}" onchange="updateLog('${log.key}', 'freeText', this.value)"></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+
+  function updateLog(key, field, value) {
+    const logToUpdate = logs.find(log => log.key === key);
+    if (!logToUpdate) {
+      console.error("更新対象のログが見つかりません:", key);
+      return;
+    }
+    
+    const updatedField = { [field]: value };
+
+    // Firebase上のデータを更新
+    firebase.database().ref("moodLogs/" + key).update(updatedField)
+      .then(() => {
+        // ローカルのデータも更新
+        logToUpdate.data[field] = value;
+        console.log("更新成功:", key, updatedField);
+      })
+      .catch(error => {
+        console.error("更新失敗:", error);
+        alert(`データの更新に失敗しました: ${error.message}`);
+        // 失敗した場合はページをリロード
+        location.reload();
+      });
+  }
+
+  // 日付の変換（ISO文字列 → datetime-localの形式）
+  function formatForInput(isoString) {
+    if (!isoString) return "";
+    
+    try {
+      // ISO文字列から最初の16文字（YYYY-MM-DDTHH:mm）を取得
+      return isoString.slice(0, 16);
+    } catch (error) {
+      console.error("日付変換エラー:", error, isoString);
+      return "";
+    }
+  }
+
+  function filterByDateRange() {
+    const startDate = document.getElementById("start-date").value;
+    const endDate = document.getElementById("end-date").value;
+
+    if (!startDate && !endDate) {
+      filteredLogs = [...logs];
+      renderTable(filteredLogs);
+      return;
+    }
+
+    filteredLogs = logs.filter(log => {
+      const logDate = new Date(log.data.date || log.data.timestamp);
+      
+      if (isNaN(logDate.getTime())) {
+        console.warn("無効な日付データ:", log.data.date);
+        return false;
+      }
+
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate + "T23:59:59.999Z") : null;
+
+      if (start && end) {
+        return logDate >= start && logDate <= end;
+      } else if (start) {
+        return logDate >= start;
+      } else if (end) {
+        return logDate <= end;
+      }
+      return true;
+    });
+
+    renderTable(filteredLogs);
+  }
+
+  function resetFilter() {
+    document.getElementById("start-date").value = "";
+    document.getElementById("end-date").value = "";
+    renderTable(logs);
+  }
+
+  // ページ読み込み時にデータを取得
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("ページ読み込み完了、データ取得開始");
+    loadData();
   });
-
-  renderTable(filtered);
-}
-
-function resetFilter() {
-  document.getElementById("start-date").value = "";
-  document.getElementById("end-date").value = "";
-  renderTable(logs);
-}
-
-  </script>
+</script>
 </body>
 </html>
