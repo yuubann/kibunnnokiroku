@@ -169,7 +169,12 @@
     filteredLogs.forEach(log => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td><input type="datetime-local" value="${formatForInput(log.data.timestamp || log.data.date)}" onchange="updateLog('${log.key}', 'date', this.value)"></td>
+        <td>
+          <div style="margin-bottom: 4px; font-size: 14px; color: #333;">
+            ${formatToJapaneseDateTime(log.data.timestamp || log.data.date)}
+          </div>
+          <input type="datetime-local" value="${formatForInput(log.data.timestamp || log.data.date)}" onchange="updateLog('${log.key}', 'timestamp', this.value)" style="width: 100%; font-size: 12px;">
+        </td>
         <td><input value="${log.data.mood || ''}" onchange="updateLog('${log.key}', 'mood', this.value)"></td>
         <td><input value="${log.data.majorCategory || ''}" onchange="updateLog('${log.key}', 'majorCategory', this.value)"></td>
         <td><input value="${log.data.middleCategory || ''}" onchange="updateLog('${log.key}', 'middleCategory', this.value)"></td>
@@ -186,14 +191,35 @@
       return;
     }
     
-    const updatedField = { [field]: value };
+    let updatedField;
+    
+    // 日時の更新の場合、timestampとdateの両方を更新
+    if (field === 'timestamp') {
+      const isoValue = new Date(value).toISOString();
+      updatedField = { 
+        timestamp: isoValue,
+        date: isoValue
+      };
+    } else {
+      updatedField = { [field]: value };
+    }
 
     // Firebase上のデータを更新
     firebase.database().ref("moodLogs/" + key).update(updatedField)
       .then(() => {
         // ローカルのデータも更新
-        logToUpdate.data[field] = value;
+        if (field === 'timestamp') {
+          logToUpdate.data.timestamp = updatedField.timestamp;
+          logToUpdate.data.date = updatedField.date;
+        } else {
+          logToUpdate.data[field] = value;
+        }
         console.log("更新成功:", key, updatedField);
+        
+        // 日時更新の場合は表示を更新
+        if (field === 'timestamp') {
+          renderTable(filteredLogs.length > 0 ? filteredLogs : logs);
+        }
       })
       .catch(error => {
         console.error("更新失敗:", error);
@@ -201,6 +227,29 @@
         // 失敗した場合はページをリロード
         location.reload();
       });
+  }
+
+  // 日本時間での表示用フォーマット
+  function formatToJapaneseDateTime(isoString) {
+    if (!isoString) return "日時不明";
+    
+    try {
+      const date = new Date(isoString);
+      
+      // 日本時間で表示
+      return date.toLocaleString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        weekday: 'short'
+      });
+    } catch (error) {
+      console.error("日付フォーマットエラー:", error, isoString);
+      return "日付エラー";
+    }
   }
 
   // 日付の変換（ISO文字列 → datetime-localの形式）
