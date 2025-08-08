@@ -67,7 +67,6 @@
             background-color: #004a99;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        /* プルダウンメニューのコンテナ */
         .dropdown-menu {
             background-color: #ffffff;
             border: 1px solid #ddd;
@@ -80,14 +79,12 @@
             flex-direction: column;
         }
         
-        /* モバイル表示用の調整 */
         @media (min-width: 600px) {
             .dropdown-menu {
                 flex-direction: column;
             }
         }
 
-        /* プルダウン（select要素）のスタイル */
         .dropdown-menu select {
             width: 100%;
             padding: 0.75rem;
@@ -97,14 +94,12 @@
             background-color: #fff;
         }
 
-        /* 非活性状態のプルダウン */
         .dropdown-menu select:disabled {
             background-color: #e9ecef;
             cursor: not-allowed;
             opacity: 0.7;
         }
 
-        /* 非表示にするためのクラス */
         .hidden {
             display: none;
         }
@@ -118,39 +113,31 @@
             min-height: 100px;
         }
 
-        .middle-and-text {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            gap: 0.5rem;
+        .submit-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
 
-    nav {
-      margin-top: 2rem;
-      text-align: center;
-    }
-    nav a {
-      margin: 0 10px;
-      text-decoration: none;
-      color: #007bff;
-    }
-    </style>
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
-    authDomain: "kibunnnokiroku.firebaseapp.com",
-    databaseURL: "https://kibunnnokiroku-default-rtdb.firebaseio.com",
-    projectId: "kibunnnokiroku",
-    storageBucket: "kibunnnokiroku.firebasestorage.app",
-    messagingSenderId: "385335029995",
-    appId: "1:385335029995:web:35728204be94704f350eae",
-    measurementId: "G-HRTWT7EHBP"
-  };
+        .submit-button:hover {
+            background-color: #218838;
+        }
 
-  firebase.initializeApp(firebaseConfig);
-</script>
+        nav {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -158,80 +145,108 @@
             <h1>今日の気分はどうですか？</h1>
             <div class="date" id="currentDate"></div>
         </div>
-  <nav style="margin-top: 2rem; text-align: center;">
-    <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
-    <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
-    <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
-  </nav>
-　<br>
-    <div class="button-container">
-        <button class="category-button" data-target="dropdown1">とても良い</button>
-        <button class="category-button" data-target="dropdown2">良い</button>
-        <button class="category-button" data-target="dropdown3">普通</button>
-        <button class="category-button" data-target="dropdown4">悪い</button>
-        <button class="category-button" data-target="dropdown5">とても悪い</button>
+        <nav>
+            <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
+            <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
+            <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
+        </nav>
+        <br>
+        <div class="button-container">
+            <button class="category-button" data-target="dropdown1">とても良い</button>
+            <button class="category-button" data-target="dropdown2">良い</button>
+            <button class="category-button" data-target="dropdown3">普通</button>
+            <button class="category-button" data-target="dropdown4">悪い</button>
+            <button class="category-button" data-target="dropdown5">とても悪い</button>
+        </div>
+        
+        <!-- 5つのプルダウンメニュー -->
+        <div id="dropdown1" class="dropdown-menu hidden">
+            <select class="major-category">
+                <option value="">原因を選択</option>
+            </select>
+            <select class="middle-category" disabled>
+                <option value="">具体的には？</option>
+            </select>
+            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+            <button class="submit-button hidden">送信</button>
+        </div>
+        <div id="dropdown2" class="dropdown-menu hidden">
+            <select class="major-category">
+                <option value="">原因を選択</option>
+            </select>
+            <select class="middle-category" disabled>
+                <option value="">具体的には？</option>
+            </select>
+            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+            <button class="submit-button hidden">送信</button>
+        </div>
+        <div id="dropdown3" class="dropdown-menu hidden">
+            <select class="major-category">
+                <option value="">原因を選択</option>
+            </select>
+            <select class="middle-category" disabled>
+                <option value="">具体的には？</option>
+            </select>
+            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+            <button class="submit-button hidden">送信</button>
+        </div>
+        <div id="dropdown4" class="dropdown-menu hidden">
+            <select class="major-category">
+                <option value="">原因を選択</option>
+            </select>
+            <select class="middle-category" disabled>
+                <option value="">具体的には？</option>
+            </select>
+            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+            <button class="submit-button hidden">送信</button>
+        </div>
+        <div id="dropdown5" class="dropdown-menu hidden">
+            <select class="major-category">
+                <option value="">原因を選択</option>
+            </select>
+            <select class="middle-category" disabled>
+                <option value="">具体的には？</option>
+            </select>
+            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+            <button class="submit-button hidden">送信</button>
+        </div>
     </div>
-    <!-- 5つのプルダウンメニュー（最初は非表示） -->
-    <div id="dropdown1" class="dropdown-menu hidden">
-        <select class="major-category">
-            <option value="">原因を選択</option>
-        </select>
-        <select class="middle-category" disabled>
-            <option value="">具体的には？</option>
-        </select>
-       <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-      <button class="submit-button hidden">送信</button>
-    </div>
-    <div id="dropdown2" class="dropdown-menu hidden">
-        <select class="major-category">
-            <option value="">原因を選択</option>
-        </select>
-        <select class="middle-category" disabled>
-            <option value="">具体的には？</option>
-        </select>
-        <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-      <button class="submit-button hidden">送信</button>
-    </div>
-    <div id="dropdown3" class="dropdown-menu hidden">
-        <select class="major-category">
-            <option value="">原因を選択</option>
-        </select>
-        <select class="middle-category" disabled>
-            <option value="">具体的には？</option>
-        </select>
-        <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-      <button class="submit-button hidden">送信</button>
-    </div>
-    <div id="dropdown4" class="dropdown-menu hidden">
-        <select class="major-category">
-            <option value="">原因を選択</option>
-        </select>
-        <select class="middle-category" disabled>
-            <option value="">具体的には？</option>
-        </select>
-       <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-      <button class="submit-button hidden">送信</button>
-    </div>
-    <div id="dropdown5" class="dropdown-menu hidden">
-        <select class="major-category">
-            <option value="">原因を選択</option>
-        </select>
-        <select class="middle-category" disabled>
-            <option value="">具体的には？</option>
-        </select>
-       <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-      <button class="submit-button hidden">送信</button>
-    </div>
-</div>
 
+    <!-- Firebase CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 
-<script>
-    (function() {
-        // ISO形式の日付表示
-        const now = new Date();
-        // ISO形式（YYYY-MM-DD）で表示
-        document.getElementById('currentDate').textContent = now.toISOString().split('T')[0];
+    <script>
+        // Firebase設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
+            authDomain: "kibunnnokiroku.firebaseapp.com",
+            databaseURL: "https://kibunnnokiroku-default-rtdb.firebaseio.com",
+            projectId: "kibunnnokiroku",
+            storageBucket: "kibunnnokiroku.firebasestorage.app",
+            messagingSenderId: "385335029995",
+            appId: "1:385335029995:web:35728204be94704f350eae",
+            measurementId: "G-HRTWT7EHBP"
+        };
 
+        firebase.initializeApp(firebaseConfig);
+
+        // 現在日時を表示
+        function updateCurrentDate() {
+            const now = new Date();
+            const currentDateElement = document.getElementById('currentDate');
+            
+            currentDateElement.textContent = now.toLocaleString('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                weekday: 'short'
+            });
+        }
+
+        // カテゴリデータ
         const categoryData = {
             '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲みすぎ','その他'],
             '仕事・学業が原因': ['仕事が忙しい','仕事が上手くいっている','タスクが多い', 'タスクが丁度いい','タスクが少ない', 'プレッシャーがある','人間関係ストレスがある','人間関係が快適','通勤ストレス','通勤が快適','その他'],
@@ -240,139 +255,183 @@
             '体調・健康が原因': ['調子がいい', '風邪気味である', '頭痛がする', '胃腸不調','生理・ホルモン','アレルギー','その他']
         };
 
+        // 要素取得
         const buttons = document.querySelectorAll('.category-button');
         const dropdowns = document.querySelectorAll('.dropdown-menu');
         const majorCategorySelects = document.querySelectorAll('.major-category');
+        const middleCategorySelects = document.querySelectorAll('.middle-category');
+        const submitButtons = document.querySelectorAll('.submit-button');
 
-        majorCategorySelects.forEach(select => {
-            for (const majorCategory in categoryData) {
-                const option = document.createElement('option');
-                option.value = majorCategory;
-                option.textContent = majorCategory;
-                select.appendChild(option);
+        // データ記録用
+        let logs = JSON.parse(localStorage.getItem("moodLogs")) || [];
+
+        // Firebase保存関数
+        function saveLogToFirebase(entry) {
+            return firebase.database().ref("moodLogs").push(entry)
+                .then(() => {
+                    console.log("Firebase保存成功");
+                    return true;
+                })
+                .catch(error => {
+                    console.error("Firebase保存エラー:", error);
+                    alert("記録の保存に失敗しました。ネットワーク接続を確認してください。");
+                    return false;
+                });
+        }
+
+        // バリデーション関数
+        function validateEntry(entry) {
+            const required = ['mood', 'majorCategory', 'middleCategory'];
+            
+            for (const field of required) {
+                if (!entry[field] || entry[field].trim() === '') {
+                    throw new Error(`${field}は必須項目です`);
+                }
             }
-        });
+            
+            const validMoods = ['とても良い', '良い', '普通', '悪い', 'とても悪い'];
+            if (!validMoods.includes(entry.mood)) {
+                throw new Error('無効な気分の値です');
+            }
+            
+            return true;
+        }
 
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.dataset.target;
-                const targetDropdown = document.getElementById(targetId);
+        // フォームリセット関数
+        function resetForm(dropdown, moodButton) {
+            dropdown.querySelector('.major-category').value = '';
+            dropdown.querySelector('.middle-category').innerHTML = '<option value="">具体的には？</option>';
+            dropdown.querySelector('.middle-category').disabled = true;
+            dropdown.querySelector('.free-text').value = '';
+            dropdown.querySelector('.free-text').classList.add('hidden');
+            dropdown.querySelector('.submit-button').classList.add('hidden');
+            if (moodButton) moodButton.classList.remove('active');
+            dropdown.classList.add('hidden');
+        }
 
-                dropdowns.forEach(dropdown => {
-                    if (dropdown.id !== targetId) {
-                        dropdown.classList.add('hidden');
-                    }
-                });
-
-                buttons.forEach(btn => {
-                    if (btn !== button) {
-                        btn.classList.remove('active');
-                    }
-                });
-
-                targetDropdown.classList.toggle('hidden');
-                button.classList.toggle('active');
-            });
-        });
-
-        majorCategorySelects.forEach(select => {
-            select.addEventListener('change', (event) => {
-                const selectedMajorCategory = event.target.value;
-                const middleCategorySelect = event.target.nextElementSibling;
-
-                middleCategorySelect.innerHTML = '<option value="">中カテゴリを選択</option>';
-                middleCategorySelect.disabled = true;
-
-                if (selectedMajorCategory) {
-                    const middleCategories = categoryData[selectedMajorCategory];
-                    middleCategories.forEach(middleCategory => {
-                        const option = document.createElement('option');
-                        option.value = middleCategory;
-                        option.textContent = middleCategory;
-                        middleCategorySelect.appendChild(option);
-                    });
-
-                    middleCategorySelect.disabled = false;
+        // 初期化処理
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            
+            // 大カテゴリのオプション追加
+            majorCategorySelects.forEach(select => {
+                for (const majorCategory in categoryData) {
+                    const option = document.createElement('option');
+                    option.value = majorCategory;
+                    option.textContent = majorCategory;
+                    select.appendChild(option);
                 }
             });
+
+            // 気分ボタンのイベント
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target;
+                    const targetDropdown = document.getElementById(targetId);
+
+                    // 他のドロップダウンを非表示
+                    dropdowns.forEach(dropdown => {
+                        if (dropdown.id !== targetId) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
+
+                    // 他のボタンを非活性
+                    buttons.forEach(btn => {
+                        if (btn !== button) {
+                            btn.classList.remove('active');
+                        }
+                    });
+
+                    targetDropdown.classList.toggle('hidden');
+                    button.classList.toggle('active');
+                });
+            });
+
+            // 大カテゴリ変更イベント
+            majorCategorySelects.forEach(select => {
+                select.addEventListener('change', (event) => {
+                    const selectedMajorCategory = event.target.value;
+                    const middleCategorySelect = event.target.nextElementSibling;
+
+                    middleCategorySelect.innerHTML = '<option value="">具体的には？</option>';
+                    middleCategorySelect.disabled = true;
+
+                    if (selectedMajorCategory) {
+                        const middleCategories = categoryData[selectedMajorCategory];
+                        middleCategories.forEach(middleCategory => {
+                            const option = document.createElement('option');
+                            option.value = middleCategory;
+                            option.textContent = middleCategory;
+                            middleCategorySelect.appendChild(option);
+                        });
+                        middleCategorySelect.disabled = false;
+                    }
+                });
+            });
+
+            // 中カテゴリ変更イベント
+            middleCategorySelects.forEach(select => {
+                select.addEventListener('change', (event) => {
+                    const dropdownMenu = event.target.closest('.dropdown-menu');
+                    const freeText = dropdownMenu.querySelector('.free-text');
+                    const submitButton = dropdownMenu.querySelector('.submit-button');
+
+                    if (event.target.value) {
+                        freeText.classList.remove('hidden');
+                        submitButton.classList.remove('hidden');
+                    } else {
+                        freeText.classList.add('hidden');
+                        submitButton.classList.add('hidden');
+                    }
+                });
+            });
+
+            // 送信ボタンイベント
+            submitButtons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    try {
+                        const dropdown = button.closest('.dropdown-menu');
+                        const moodButton = document.querySelector('.category-button.active');
+                        const moodLabel = moodButton ? moodButton.textContent : "";
+
+                        const majorCategory = dropdown.querySelector('.major-category').value;
+                        const middleCategory = dropdown.querySelector('.middle-category').value;
+                        const freeText = dropdown.querySelector('.free-text').value;
+
+                        const entry = {
+                            date: new Date().toISOString(),
+                            timestamp: new Date().toISOString(),
+                            mood: moodLabel,
+                            majorCategory,
+                            middleCategory,
+                            freeText
+                        };
+
+                        // バリデーション
+                        validateEntry(entry);
+
+                        // ローカルストレージに保存
+                        logs.push(entry);
+                        localStorage.setItem("moodLogs", JSON.stringify(logs));
+
+                        // Firebaseに保存
+                        const saveSuccess = await saveLogToFirebase(entry);
+                        
+                        if (saveSuccess) {
+                            console.log("記録されました:", entry);
+                            alert("記録しました！");
+                            resetForm(dropdown, moodButton);
+                        }
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                });
+            });
+
+            // 1分ごとに時刻を更新
+            setInterval(updateCurrentDate, 60000);
         });
-    })();
-
-const middleCategorySelects = document.querySelectorAll('.middle-category');
-
-middleCategorySelects.forEach(select => {
-    select.addEventListener('change', (event) => {
-        const dropdownMenu = event.target.closest('.dropdown-menu');
-        const freeText = dropdownMenu.querySelector('.free-text');
-        const submitButton = dropdownMenu.querySelector('.submit-button'); // 送信ボタンを取得
-
-        if (event.target.value) {
-            // 中カテゴリが選ばれたら、テキストエリアと送信ボタンを表示
-            freeText.classList.remove('hidden');
-            submitButton.classList.remove('hidden');
-        } else {
-            // 中カテゴリが未選択なら、両方非表示
-            freeText.classList.add('hidden');
-            submitButton.classList.add('hidden');
-        }
-    });
-});
-
-// データを記録するための配列
-let logs = JSON.parse(localStorage.getItem("moodLogs")) || [];
-
-const submitButtons = document.querySelectorAll('.submit-button');
-const dropdowns = document.querySelectorAll('.dropdown-menu');
-
-// Firebase に push する関数
-function saveLogToFirebase(entry) {
-  firebase.database().ref("moodLogs").push(entry);
-}
-
-
-// 各送信ボタンの処理
-submitButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const dropdown = button.closest('.dropdown-menu');
-        const moodButton = document.querySelector(`.category-button.active`);
-        const moodLabel = moodButton ? moodButton.textContent : "未選択";
-
-        const majorCategory = dropdown.querySelector('.major-category').value;
-        const middleCategory = dropdown.querySelector('.middle-category').value;
-        const freeText = dropdown.querySelector('.free-text').value;
-
-        const entry = {
-            date: new Date().toLocaleString(),
-            mood: moodLabel,
-            majorCategory,
-            middleCategory,
-            freeText
-        };
-
-        logs.push(entry);
-
-        console.log("記録されました:", entry);
-
-        alert("記録しました！");
-
-        // ローカルストレージにも保存（永続化）
-        localStorage.setItem("moodLogs", JSON.stringify(logs));
-        firebase.database().ref("moodLogs").push(entry);
-
-        // フォームをリセット
-        dropdown.querySelector('.major-category').value = '';
-        dropdown.querySelector('.middle-category').innerHTML = '<option value="">具体的には？</option>';
-        dropdown.querySelector('.middle-category').disabled = true;
-        dropdown.querySelector('.free-text').value = '';
-        dropdown.querySelector('.free-text').classList.add('hidden');
-        button.classList.add('hidden');
-        moodButton.classList.remove('active');
-        dropdown.classList.add('hidden');
-    });
-});
-
-</script>
-
-
+    </script>
 </body>
 </html>
