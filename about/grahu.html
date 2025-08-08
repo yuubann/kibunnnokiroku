@@ -2,30 +2,22 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>記録一覧</title>
+  <title>統計グラフ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: sans-serif;
       padding: 2rem;
-      background-color: #f7f9fc;
-    }
-    h1 {
+      background-color: #eef2f7;
       text-align: center;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: #fff;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    input {
+      margin: 0.5rem;
+      padding: 0.4rem;
     }
-    th, td {
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-    th {
-      background-color: #007bff;
-      color: white;
+    canvas {
+      max-width: 700px;
+      margin: 2rem auto;
     }
     nav {
       margin-top: 2rem;
@@ -39,38 +31,23 @@
   </style>
 </head>
 <body>
-  <h1>記録一覧</h1>
   <nav style="margin-top: 2rem; text-align: center;">
     <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
     <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
     <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
   </nav>
- <br>
-<label for="start-date">開始日:</label>
-<input type="date" id="start-date">
-<label for="end-date">終了日:</label>
-<input type="date" id="end-date">
-<button onclick="filterByDateRange()">検索</button>
-<button onclick="resetFilter()">リセット</button>
-<br><br>
-  <table>
-    <thead>
-      <tr>
-        <th>日時</th>
-        <th>気分</th>
-        <th>大カテゴリ</th>
-        <th>中カテゴリ</th>
-        <th>メモ</th>
-      </tr>
-    </thead>
-    <tbody id="log-table-body"></tbody>
-  </table>
+　<br>
+  <h1>気分統計グラフ（期間指定）</h1>
+  <label>開始日: <input type="date" id="startDate"></label>
+  <label>終了日: <input type="date" id="endDate"></label>
+  <button onclick="filterAndRender()">更新</button>
+
+  <canvas id="moodChart"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 
 <script>
-
   const firebaseConfig = {
     apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
     authDomain: "kibunnnokiroku.firebaseapp.com",
@@ -82,156 +59,82 @@
     measurementId: "G-HRTWT7EHBP"
   };
 
-  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
 
-let logs = []; // { key: 'ユニークID', data: {記録内容} } の形式で保存
-let filteredLogs = [];
+let rawLogs = [];
 
-firebase.database().ref("moodLogs").once("value").then(snapshot => {
-    const logsData = snapshot.val() || {};
-    logs = []; // 配列を初期化
-    snapshot.forEach(childSnapshot => {
-        logs.push({
-            key: childSnapshot.key, // ← ユニークIDを保持
-            data: childSnapshot.val()
-        });
-    });
-    // 日付の降順（新しいものが上）に並び替え
-    logs.sort((a, b) => new Date(b.data.timestamp || b.data.date) - new Date(a.data.timestamp || a.data.date));
-    renderTable(logs);
-});
-
-const tableBody = document.getElementById("log-table-body");
-
-function renderTable(filteredLogs) {
-    tableBody.innerHTML = "";
-    filteredLogs.forEach((log, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td><input type="datetime-local" value="${formatForInput(log.data.timestamp || log.data.date)}" onchange="updateLog('${log.key}', 'date', this.value)"></td>
-            <td><input value="${log.data.mood}" onchange="updateLog('${log.key}', 'mood', this.value)"></td>
-            <td><input value="${log.data.majorCategory}" onchange="updateLog('${log.key}', 'majorCategory', this.value)"></td>
-            <td><input value="${log.data.middleCategory}" onchange="updateLog('${log.key}', 'middleCategory', this.value)"></td>
-            <td><input value="${log.data.freeText || ""}" onchange="updateLog('${log.key}', 'freeText', this.value)"></td>
-        `;
-        tableBody.appendChild(row);
+function fetchFromFirebaseAndRender() {
+  firebase.database().ref("moodLogs").once("value")
+    .then(snapshot => {
+      rawLogs = Object.values(snapshot.val() || {});
+      filterAndRender();
+    })
+    .catch(error => {
+      console.error("Firebaseからの読み込みに失敗:", error);
+      alert("データの読み込みに失敗しました。");
+      renderChart([], []); // 空のグラフを表示
     });
 }
 
-function updateLog(key, field, value) {
-    const logToUpdate = logs.find(log => log.key === key);
-    const updatedField = { [field]: value };
+    function filterAndRender() {
+      const start = new Date(document.getElementById('startDate').value);
+      const end = new Date(document.getElementById('endDate').value);
+      end.setHours(23, 59, 59, 999); // include end of day
 
-    // Firebase上の特定のキーを持つデータを更新
-    firebase.database().ref("moodLogs/" + logToUpdate.key).update(updatedField)
-        .then(() => {
-            // ローカルのデータも更新
-            logToUpdate.data[field] = value;
-            console.log("更新成功:", logToUpdate.key, updatedField);
-        })
-        .catch(error => {
-            console.error("更新失敗:", error);
-            alert("データの更新に失敗しました。");
-            // 失敗した場合はページをリロードして再同期するなどの対応
-            location.reload();
-        });
-}
+      const filtered = rawLogs.filter(log => {
+        const logDate = new Date(log.date);
+        return (!isNaN(start) && !isNaN(end)) ? logDate >= start && logDate <= end : true;
+      });
 
+      const moodCounts = {
+        'とても良い': 0,
+        '良い': 0,
+        '普通': 0,
+        '悪い': 0,
+        'とても悪い': 0
+      };
 
-// 日付の変換（"2025/08/05 10:12:34" → "2025-08-05T10:12"）
-function formatForInput(isoString) {
-  if (!isoString) return "";
-  
-  try {
-    // ISO文字列から最初の16文字（YYYY-MM-DDTHH:mm）を取得
-    return isoString.slice(0, 16);
-  } catch (error) {
-    console.error("日付変換エラー:", error);
-    return "";
-  }
-}
-
-function filterByDateRange() {
-    const startDate = document.getElementById("start-date").value;
-    const endDate = document.getElementById("end-date").value;
-
-    if (!startDate && !endDate) {
-        filteredLogs = [...logs];
-        renderTable(filteredLogs);
-        return;
-    }
-
-    filteredLogs = logs.filter(log => {
-        // ISO文字列から直接Dateオブジェクトを作成
-        const logDate = new Date(log.data.date || log.data.timestamp);
-        
-        if (isNaN(logDate.getTime())) {
-            console.warn("無効な日付データ:", log.data.date);
-            return false;
+      filtered.forEach(log => {
+        if (moodCounts.hasOwnProperty(log.mood)) {
+          moodCounts[log.mood]++;
         }
+      });
 
-        const start = startDate ? new Date(startDate) : null;
-        const end = endDate ? new Date(endDate + "T23:59:59.999Z") : null;
+      renderChart(Object.keys(moodCounts), Object.values(moodCounts));
+    }
 
-        if (start && end) {
-            return logDate >= start && logDate <= end;
-        } else if (start) {
-            return logDate >= start;
-        } else if (end) {
-            return logDate <= end;
+    let chart;
+
+    function renderChart(labels, data) {
+      const ctx = document.getElementById('moodChart').getContext('2d');
+
+      if (chart) chart.destroy(); // 再描画のため一度破棄
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '選択回数',
+            data,
+            backgroundColor: ['#4caf50', '#8bc34a', '#ffc107', '#ff9800', '#f44336']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            }
+          }
         }
-        return true;
-    });
-
-    renderTable(filteredLogs);
-}
-
-function resetFilter() {
-  document.getElementById("start-date").value = "";
-  document.getElementById("end-date").value = "";
-  renderTable(logs);
-}
-
-// ページネーション機能の追加
-function loadLogsWithPagination(startAfter = null, limit = 50) {
-    let query = firebase.database().ref("moodLogs")
-        .orderByChild("timestamp")
-        .limitToLast(limit);
-    
-    if (startAfter) {
-        query = query.endBefore(startAfter);
+      });
     }
-    
-    return query.once("value");
-}
 
-// 削除機能の追加（記録一覧ページ）
-function deleteLog(key) {
-    if (confirm('この記録を削除しますか？')) {
-        firebase.database().ref("moodLogs/" + key).remove()
-            .then(() => {
-                alert('記録を削除しました');
-                location.reload(); // または部分更新
-            })
-            .catch(error => {
-                console.error('削除エラー:', error);
-                alert('削除に失敗しました');
-            });
-    }
-}
-
-// ローディング表示の追加
-function showLoading() {
-    document.body.style.cursor = 'wait';
-    // ローディングスピナーの表示
-}
-
-function hideLoading() {
-    document.body.style.cursor = 'default';
-    // ローディングスピナーの非表示
-}
-
+    // 初期描画（全期間）
+    window.onload = () => fetchFromFirebaseAndRender();
   </script>
 </body>
 </html>
