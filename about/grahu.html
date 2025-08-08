@@ -44,8 +44,8 @@
 
   <canvas id="moodChart"></canvas>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -67,12 +67,13 @@ let rawLogs = [];
 function fetchFromFirebaseAndRender() {
   firebase.database().ref("moodLogs").once("value")
     .then(snapshot => {
-      rawLogs = Object.values(snapshot.val() || []);
+      rawLogs = Object.values(snapshot.val() || {});
       filterAndRender();
     })
     .catch(error => {
       console.error("Firebaseからの読み込みに失敗:", error);
-      renderChart([], []);
+      alert("データの読み込みに失敗しました。");
+      renderChart([], []); // 空のグラフを表示
     });
 }
 
