@@ -88,6 +88,71 @@
       font-weight: 500;
       white-space: nowrap;
     }
+    .delete-button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 0.5rem;
+    }
+    .delete-button:hover {
+      background-color: #c82333;
+    }
+    .action-column {
+      width: 120px;
+      text-align: center;
+    }
+    .confirm-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .confirm-dialog-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      text-align: center;
+    }
+    .confirm-dialog-buttons {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .confirm-yes {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .confirm-no {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .confirm-yes:hover {
+      background-color: #c82333;
+    }
+    .confirm-no:hover {
+      background-color: #5a6268;
+    }
   </style>
 </head>
 <body>
@@ -109,6 +174,19 @@
 <div id="loading" class="loading">データを読み込み中...</div>
 <div id="error" class="error" style="display: none;"></div>
 
+<!-- 削除確認ダイアログ -->
+<div id="confirm-dialog" class="confirm-dialog">
+  <div class="confirm-dialog-content">
+    <h3>記録の削除</h3>
+    <p id="confirm-message">この記録を削除してもよろしいですか？</p>
+    <div id="confirm-details"></div>
+    <div class="confirm-dialog-buttons">
+      <button id="confirm-yes" class="confirm-yes">削除する</button>
+      <button id="confirm-no" class="confirm-no">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <table style="display: none;" id="data-table">
   <thead>
     <tr>
@@ -117,6 +195,7 @@
       <th>大カテゴリ</th>
       <th>中カテゴリ</th>
       <th>メモ</th>
+      <th class="action-column">操作</th>
     </tr>
   </thead>
   <tbody id="log-table-body"></tbody>
@@ -152,11 +231,16 @@
 
   let logs = [];
   let filteredLogs = [];
+  let deleteTarget = null; // 削除対象のログ情報
 
   const tableBody = document.getElementById("log-table-body");
   const loadingDiv = document.getElementById("loading");
   const errorDiv = document.getElementById("error");
   const dataTable = document.getElementById("data-table");
+  const confirmDialog = document.getElementById("confirm-dialog");
+  const confirmDetails = document.getElementById("confirm-details");
+  const confirmYes = document.getElementById("confirm-yes");
+  const confirmNo = document.getElementById("confirm-no");
 
   // データ読み込み（エラーハンドリング強化）
   function loadData() {
@@ -208,7 +292,7 @@
     
     if (filteredLogs.length === 0) {
       const row = document.createElement("tr");
-      row.innerHTML = '<td colspan="5" style="text-align: center; color: #666;">データがありません</td>';
+      row.innerHTML = '<td colspan="6" style="text-align: center; color: #666;">データがありません</td>';
       tableBody.appendChild(row);
       return;
     }
@@ -257,9 +341,84 @@
             <textarea placeholder="メモ（任意）" onchange="updateLog('${log.key}', 'freeText', this.value)">${log.data.freeText || ''}</textarea>
           </div>
         </td>
+        <td class="action-column">
+          <button class="delete-button" onclick="showDeleteConfirm('${log.key}')">削除</button>
+        </td>
       `;
       tableBody.appendChild(row);
     });
+  }
+
+  // 削除確認ダイアログを表示
+  function showDeleteConfirm(logKey) {
+    const log = logs.find(l => l.key === logKey);
+    if (!log) {
+      console.error("削除対象のログが見つかりません:", logKey);
+      return;
+    }
+
+    deleteTarget = { key: logKey, data: log.data };
+
+    // 削除対象の詳細を表示
+    const details = `
+      <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0; text-align: left;">
+        <strong>削除対象の記録:</strong><br>
+        日時: ${formatToJapaneseDateTime(log.data.timestamp || log.data.date)}<br>
+        気分: ${log.data.mood || '未設定'}<br>
+        大カテゴリ: ${log.data.majorCategory || '未設定'}<br>
+        中カテゴリ: ${log.data.middleCategory || '未設定'}<br>
+        ${log.data.freeText ? `メモ: ${log.data.freeText.substring(0, 50)}${log.data.freeText.length > 50 ? '...' : ''}` : ''}
+      </div>
+    `;
+    
+    confirmDetails.innerHTML = details;
+    confirmDialog.style.display = "flex";
+  }
+
+  // 削除確認ダイアログを非表示
+  function hideDeleteConfirm() {
+    confirmDialog.style.display = "none";
+    deleteTarget = null;
+  }
+
+  // 実際の削除処理
+  function deleteLog() {
+    if (!deleteTarget) {
+      console.error("削除対象が設定されていません");
+      return;
+    }
+
+    const logKey = deleteTarget.key;
+    
+    // Firebase から削除
+    firebase.database().ref("moodLogs/" + logKey).remove()
+      .then(() => {
+        console.log("削除成功:", logKey);
+        
+        // ローカルのデータからも削除
+        logs = logs.filter(log => log.key !== logKey);
+        
+        // テーブルを再描画（現在のフィルター状態を維持）
+        const startDate = document.getElementById("start-date").value;
+        const endDate = document.getElementById("end-date").value;
+        
+        if (startDate || endDate) {
+          filterByDateRange();
+        } else {
+          renderTable(logs);
+        }
+        
+        // ダイアログを閉じる
+        hideDeleteConfirm();
+        
+        // 成功メッセージ（オプション）
+        alert("記録を削除しました");
+      })
+      .catch(error => {
+        console.error("削除失敗:", error);
+        alert(`記録の削除に失敗しました: ${error.message}`);
+        hideDeleteConfirm();
+      });
   }
 
   // 大カテゴリ変更時の処理
@@ -370,6 +529,24 @@
     document.getElementById("end-date").value = "";
     renderTable(logs);
   }
+
+  // イベントリスナーの設定
+  confirmYes.addEventListener('click', deleteLog);
+  confirmNo.addEventListener('click', hideDeleteConfirm);
+
+  // ダイアログの背景をクリックした場合も閉じる
+  confirmDialog.addEventListener('click', function(e) {
+    if (e.target === confirmDialog) {
+      hideDeleteConfirm();
+    }
+  });
+
+  // ESCキーでダイアログを閉じる
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && confirmDialog.style.display === 'flex') {
+      hideDeleteConfirm();
+    }
+  });
 
   // ページ読み込み時にデータを取得
   document.addEventListener('DOMContentLoaded', function() {
