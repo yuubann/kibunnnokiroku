@@ -33,11 +33,58 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-align: center;
         }
-
         .header h1 {
             font-size: 24px;
             color: #2c3e50;
             margin-bottom: 8px;
+        }
+        .auth-container {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .auth-input {
+            padding: 0.75rem;
+            margin: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            width: 200px;
+        }
+        .auth-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        .auth-button:hover {
+            background-color: #0056b3;
+        }
+        .logout-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            float: right;
+        }
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+        .user-info {
+            background-color: #e7f3ff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
         .button-container {
             display: flex;
@@ -57,12 +104,10 @@
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
         .category-button:hover {
             background-color: #0056b3;
             transform: translateY(-2px);
         }
-        
         .category-button.active {
             background-color: #004a99;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -78,13 +123,6 @@
             gap: 1rem;
             flex-direction: column;
         }
-        
-        @media (min-width: 600px) {
-            .dropdown-menu {
-                flex-direction: column;
-            }
-        }
-
         .dropdown-menu select {
             width: 100%;
             padding: 0.75rem;
@@ -93,17 +131,14 @@
             font-size: 1rem;
             background-color: #fff;
         }
-
         .dropdown-menu select:disabled {
             background-color: #e9ecef;
             cursor: not-allowed;
             opacity: 0.7;
         }
-
         .hidden {
             display: none;
         }
-
         .free-text {
             padding: 1rem;
             font-size: 1rem;
@@ -112,7 +147,6 @@
             resize: vertical;
             min-height: 100px;
         }
-
         .submit-button {
             background-color: #28a745;
             color: white;
@@ -123,11 +157,9 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-
         .submit-button:hover {
             background-color: #218838;
         }
-
         nav {
             margin-top: 2rem;
             text-align: center;
@@ -137,87 +169,116 @@
             text-decoration: none;
             color: #007bff;
         }
+        .mood-app {
+            display: none;
+        }
+        .mood-app.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>今日の気分はどうですか？</h1>
-            <div class="date" id="currentDate"></div>
+        <!-- 認証画面 -->
+        <div id="auth-screen">
+            <div class="auth-container">
+                <h2>気分記録システム - ログイン</h2>
+                <p>個人用のユニークIDを入力してください。初回入力時に自動でアカウントが作成されます。</p>
+                <input type="text" id="user-id" class="auth-input" placeholder="ユニークID（例：yamada123）" maxlength="50">
+                <input type="password" id="password" class="auth-input" placeholder="パスワード" maxlength="50">
+                <br>
+                <button onclick="loginUser()" class="auth-button">ログイン / 新規作成</button>
+                <div id="auth-message" style="margin-top: 1rem; color: #666; font-size: 0.9rem;"></div>
+            </div>
         </div>
-        <nav>
-            <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
-            <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
-            <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
-        </nav>
-        <br>
-        <div class="button-container">
-            <button class="category-button" data-target="dropdown1">とても良い</button>
-            <button class="category-button" data-target="dropdown2">良い</button>
-            <button class="category-button" data-target="dropdown3">普通</button>
-            <button class="category-button" data-target="dropdown4">悪い</button>
-            <button class="category-button" data-target="dropdown5">とても悪い</button>
-        </div>
-        
-        <!-- 5つのプルダウンメニュー -->
-        <div id="dropdown1" class="dropdown-menu hidden">
-            <select class="major-category">
-                <option value="">原因を選択</option>
-            </select>
-            <select class="middle-category" disabled>
-                <option value="">具体的には？</option>
-            </select>
-            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-            <button class="submit-button hidden">送信</button>
-        </div>
-        <div id="dropdown2" class="dropdown-menu hidden">
-            <select class="major-category">
-                <option value="">原因を選択</option>
-            </select>
-            <select class="middle-category" disabled>
-                <option value="">具体的には？</option>
-            </select>
-            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-            <button class="submit-button hidden">送信</button>
-        </div>
-        <div id="dropdown3" class="dropdown-menu hidden">
-            <select class="major-category">
-                <option value="">原因を選択</option>
-            </select>
-            <select class="middle-category" disabled>
-                <option value="">具体的には？</option>
-            </select>
-            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-            <button class="submit-button hidden">送信</button>
-        </div>
-        <div id="dropdown4" class="dropdown-menu hidden">
-            <select class="major-category">
-                <option value="">原因を選択</option>
-            </select>
-            <select class="middle-category" disabled>
-                <option value="">具体的には？</option>
-            </select>
-            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-            <button class="submit-button hidden">送信</button>
-        </div>
-        <div id="dropdown5" class="dropdown-menu hidden">
-            <select class="major-category">
-                <option value="">原因を選択</option>
-            </select>
-            <select class="middle-category" disabled>
-                <option value="">具体的には？</option>
-            </select>
-            <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
-            <button class="submit-button hidden">送信</button>
+
+        <!-- メインアプリ -->
+        <div id="mood-app" class="mood-app">
+            <div class="header">
+                <button onclick="logoutUser()" class="logout-button">ログアウト</button>
+                <h1>今日の気分はどうですか？</h1>
+                <div class="user-info">
+                    ログイン中: <span id="current-user"></span>
+                </div>
+                <div class="date" id="currentDate"></div>
+            </div>
+
+            <nav>
+                <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
+                <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
+                <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
+            </nav>
+            <br>
+
+            <div class="button-container">
+                <button class="category-button" data-target="dropdown1">とても良い</button>
+                <button class="category-button" data-target="dropdown2">良い</button>
+                <button class="category-button" data-target="dropdown3">普通</button>
+                <button class="category-button" data-target="dropdown4">悪い</button>
+                <button class="category-button" data-target="dropdown5">とても悪い</button>
+            </div>
+            
+            <!-- 5つのプルダウンメニュー -->
+            <div id="dropdown1" class="dropdown-menu hidden">
+                <select class="major-category">
+                    <option value="">原因を選択</option>
+                </select>
+                <select class="middle-category" disabled>
+                    <option value="">具体的には？</option>
+                </select>
+                <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+                <button class="submit-button hidden">送信</button>
+            </div>
+            <div id="dropdown2" class="dropdown-menu hidden">
+                <select class="major-category">
+                    <option value="">原因を選択</option>
+                </select>
+                <select class="middle-category" disabled>
+                    <option value="">具体的には？</option>
+                </select>
+                <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+                <button class="submit-button hidden">送信</button>
+            </div>
+            <div id="dropdown3" class="dropdown-menu hidden">
+                <select class="major-category">
+                    <option value="">原因を選択</option>
+                </select>
+                <select class="middle-category" disabled>
+                    <option value="">具体的には？</option>
+                </select>
+                <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+                <button class="submit-button hidden">送信</button>
+            </div>
+            <div id="dropdown4" class="dropdown-menu hidden">
+                <select class="major-category">
+                    <option value="">原因を選択</option>
+                </select>
+                <select class="middle-category" disabled>
+                    <option value="">具体的には？</option>
+                </select>
+                <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+                <button class="submit-button hidden">送信</button>
+            </div>
+            <div id="dropdown5" class="dropdown-menu hidden">
+                <select class="major-category">
+                    <option value="">原因を選択</option>
+                </select>
+                <select class="middle-category" disabled>
+                    <option value="">具体的には？</option>
+                </select>
+                <textarea class="free-text hidden" placeholder="自由記入欄（任意）"></textarea>
+                <button class="submit-button hidden">送信</button>
+            </div>
         </div>
     </div>
 
     <!-- Firebase CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 
     <script>
-        // Firebase設定
+        // Firebaseの設定
         const firebaseConfig = {
             apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
             authDomain: "kibunnnokiroku.firebaseapp.com",
@@ -230,6 +291,117 @@
         };
 
         firebase.initializeApp(firebaseConfig);
+
+        // グローバル変数
+        let currentUser = null;
+        let isInitializing = true;
+
+        // カテゴリデータ
+        const categoryData = {
+            '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲み過ぎ','その他'],
+            '仕事・学業が原因': ['仕事が忙しい','仕事が上手くいっている','タスクが多い', 'タスクが丁度いい','タスクが少ない', 'プレッシャーがある','人間関係ストレスがある','人間関係が快適','通勤ストレス','通勤が快適','その他'],
+            '環境・天候が原因': ['天気が悪い','天気がいい', '暑すぎる', '寒すぎる','丁度いい','気圧変化','湿度が高い','湿度が低い','花粉','騒音','その他'],
+            'ストレス、心理的要因': ['不安がある','快適である', 'イライラする','わくわくする', '憂鬱である', '心配事がある','心配事が消えた','人間関係ストレスがある','人間関係が快適','その他'],
+            '体調・健康が原因': ['調子がいい', '風邪気味である', '頭痛がする', '胃腸不調','生理・ホルモン','アレルギー','その他']
+        };
+
+        // 認証関連の関数
+        async function loginUser() {
+            const userId = document.getElementById('user-id').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const authMessage = document.getElementById('auth-message');
+
+            if (!userId || !password) {
+                authMessage.textContent = 'ユニークIDとパスワードを入力してください。';
+                authMessage.style.color = '#dc3545';
+                return;
+            }
+
+            // 入力値を検証（英数字のみ許可）
+            if (!/^[a-zA-Z0-9]+$/.test(userId)) {
+                authMessage.textContent = 'ユニークIDは英数字のみ使用できます。';
+                authMessage.style.color = '#dc3545';
+                return;
+            }
+
+            const email = `${userId}@local.mood-tracker.com`;
+            authMessage.textContent = 'ログイン中...';
+            authMessage.style.color = '#007bff';
+
+            try {
+                // まず既存のユーザーでログインを試行
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                authMessage.textContent = 'ログインしました！';
+                authMessage.style.color = '#28a745';
+            } catch (error) {
+                if (error.code === 'auth/user-not-found') {
+                    try {
+                        // ユーザーが存在しない場合は新規作成
+                        await firebase.auth().createUserWithEmailAndPassword(email, password);
+                        authMessage.textContent = '新しいアカウントを作成してログインしました！';
+                        authMessage.style.color = '#28a745';
+                    } catch (createError) {
+                        console.error('アカウント作成エラー:', createError);
+                        authMessage.textContent = `アカウント作成に失敗しました: ${createError.message}`;
+                        authMessage.style.color = '#dc3545';
+                    }
+                } else if (error.code === 'auth/wrong-password') {
+                    authMessage.textContent = 'パスワードが正しくありません。';
+                    authMessage.style.color = '#dc3545';
+                } else {
+                    console.error('ログインエラー:', error);
+                    authMessage.textContent = `ログインに失敗しました: ${error.message}`;
+                    authMessage.style.color = '#dc3545';
+                }
+            }
+        }
+
+        function logoutUser() {
+            firebase.auth().signOut().then(() => {
+                console.log('ログアウトしました');
+            }).catch((error) => {
+                console.error('ログアウトエラー:', error);
+                alert('ログアウトに失敗しました');
+            });
+        }
+
+        // 認証状態の監視
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('mood-app').classList.add('active');
+                
+                // ユーザー情報を表示（@より前の部分のみ）
+                const displayName = user.email.split('@')[0];
+                document.getElementById('current-user').textContent = displayName;
+                
+                if (!isInitializing) {
+                    console.log('ログイン成功:', displayName);
+                }
+            } else {
+                currentUser = null;
+                document.getElementById('auth-screen').style.display = 'block';
+                document.getElementById('mood-app').classList.remove('active');
+                
+                if (!isInitializing) {
+                    console.log('ログアウトしました');
+                }
+            }
+            isInitializing = false;
+        });
+
+        // Enterキーでログイン
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginUser();
+            }
+        });
+        document.getElementById('user-id').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginUser();
+            }
+        });
 
         // 現在日時を表示
         function updateCurrentDate() {
@@ -246,30 +418,17 @@
             });
         }
 
-        // カテゴリデータ
-        const categoryData = {
-            '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲みすぎ','その他'],
-            '仕事・学業が原因': ['仕事が忙しい','仕事が上手くいっている','タスクが多い', 'タスクが丁度いい','タスクが少ない', 'プレッシャーがある','人間関係ストレスがある','人間関係が快適','通勤ストレス','通勤が快適','その他'],
-            '環境・天候が原因': ['天気が悪い','天気がいい', '暑すぎる', '寒すぎる','丁度いい','気圧変化','湿度が高い','湿度が低い','花粉','騒音','その他'],
-            'ストレス、心理的要因': ['不安がある','快適である', 'イライラする','わくわくする', '憂鬱である', '心配事がある','心配事が消えた','人間関係ストレスがある','人間関係が快適','その他'],
-            '体調・健康が原因': ['調子がいい', '風邪気味である', '頭痛がする', '胃腸不調','生理・ホルモン','アレルギー','その他']
-        };
-
-        // 要素取得
-        const buttons = document.querySelectorAll('.category-button');
-        const dropdowns = document.querySelectorAll('.dropdown-menu');
-        const majorCategorySelects = document.querySelectorAll('.major-category');
-        const middleCategorySelects = document.querySelectorAll('.middle-category');
-        const submitButtons = document.querySelectorAll('.submit-button');
-
-        // データ記録用
-        let logs = JSON.parse(localStorage.getItem("moodLogs")) || [];
-
-        // Firebase保存関数
+        // Firebaseに保存（ユーザー別）
         function saveLogToFirebase(entry) {
-            return firebase.database().ref("moodLogs").push(entry)
+            if (!currentUser) {
+                alert('ログインしてください。');
+                return Promise.reject(new Error('ユーザーが認証されていません'));
+            }
+
+            const userId = currentUser.uid;
+            return firebase.database().ref(`users/${userId}/moodLogs`).push(entry)
                 .then(() => {
-                    console.log("Firebase保存成功");
+                    console.log("Firebaseに保存成功");
                     return true;
                 })
                 .catch(error => {
@@ -313,6 +472,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateCurrentDate();
             
+            const majorCategorySelects = document.querySelectorAll('.major-category');
+            const middleCategorySelects = document.querySelectorAll('.middle-category');
+            const submitButtons = document.querySelectorAll('.submit-button');
+            const buttons = document.querySelectorAll('.category-button');
+            const dropdowns = document.querySelectorAll('.dropdown-menu');
+
             // 大カテゴリのオプション追加
             majorCategorySelects.forEach(select => {
                 for (const majorCategory in categoryData) {
@@ -329,14 +494,12 @@
                     const targetId = button.dataset.target;
                     const targetDropdown = document.getElementById(targetId);
 
-                    // 他のドロップダウンを非表示
                     dropdowns.forEach(dropdown => {
                         if (dropdown.id !== targetId) {
                             dropdown.classList.add('hidden');
                         }
                     });
 
-                    // 他のボタンを非活性
                     buttons.forEach(btn => {
                         if (btn !== button) {
                             btn.classList.remove('active');
@@ -390,6 +553,11 @@
             // 送信ボタンイベント
             submitButtons.forEach(button => {
                 button.addEventListener('click', async () => {
+                    if (!currentUser) {
+                        alert('ログインしてください。');
+                        return;
+                    }
+
                     try {
                         const dropdown = button.closest('.dropdown-menu');
                         const moodButton = document.querySelector('.category-button.active');
@@ -408,14 +576,8 @@
                             freeText
                         };
 
-                        // バリデーション
                         validateEntry(entry);
 
-                        // ローカルストレージに保存
-                        logs.push(entry);
-                        localStorage.setItem("moodLogs", JSON.stringify(logs));
-
-                        // Firebaseに保存
                         const saveSuccess = await saveLogToFirebase(entry);
                         
                         if (saveSuccess) {
