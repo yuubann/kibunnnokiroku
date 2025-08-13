@@ -12,6 +12,57 @@
     h1 {
       text-align: center;
     }
+    .auth-container {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin: 2rem auto;
+      max-width: 400px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .auth-input {
+      padding: 0.75rem;
+      margin: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      width: 200px;
+    }
+    .auth-button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 0.5rem;
+    }
+    .auth-button:hover {
+      background-color: #0056b3;
+    }
+    .logout-button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      float: right;
+      margin-bottom: 1rem;
+    }
+    .logout-button:hover {
+      background-color: #c82333;
+    }
+    .user-info {
+      background-color: #e7f3ff;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -153,59 +204,87 @@
     .confirm-no:hover {
       background-color: #5a6268;
     }
+    .main-app {
+      display: none;
+    }
+    .main-app.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <h1>記録一覧</h1>
-  <nav style="margin-top: 2rem; text-align: center;">
-    <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
-    <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
-    <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
-  </nav>
- <br>
-<label for="start-date">開始日:</label>
-<input type="date" id="start-date">
-<label for="end-date">終了日:</label>
-<input type="date" id="end-date">
-<button onclick="filterByDateRange()">検索</button>
-<button onclick="resetFilter()">リセット</button>
-<br><br>
-
-<div id="loading" class="loading">データを読み込み中...</div>
-<div id="error" class="error" style="display: none;"></div>
-
-<!-- 削除確認ダイアログ -->
-<div id="confirm-dialog" class="confirm-dialog">
-  <div class="confirm-dialog-content">
-    <h3>記録の削除</h3>
-    <p id="confirm-message">この記録を削除してもよろしいですか？</p>
-    <div id="confirm-details"></div>
-    <div class="confirm-dialog-buttons">
-      <button id="confirm-yes" class="confirm-yes">削除する</button>
-      <button id="confirm-no" class="confirm-no">キャンセル</button>
+  <!-- 認証画面 -->
+  <div id="auth-screen">
+    <div class="auth-container">
+      <h2>記録一覧 - ログイン</h2>
+      <p>ユニークIDとパスワードを入力してください</p>
+      <input type="text" id="user-id" class="auth-input" placeholder="ユニークID" maxlength="50">
+      <input type="password" id="password" class="auth-input" placeholder="パスワード" maxlength="50">
+      <br>
+      <button onclick="loginUser()" class="auth-button">ログイン</button>
+      <div id="auth-message" style="margin-top: 1rem; color: #666; font-size: 0.9rem;"></div>
     </div>
   </div>
-</div>
 
-<table style="display: none;" id="data-table">
-  <thead>
-    <tr>
-      <th>日時</th>
-      <th>気分</th>
-      <th>大カテゴリ</th>
-      <th>中カテゴリ</th>
-      <th>メモ</th>
-      <th class="action-column">操作</th>
-    </tr>
-  </thead>
-  <tbody id="log-table-body"></tbody>
-</table>
+  <!-- メインアプリ -->
+  <div id="main-app" class="main-app">
+    <button onclick="logoutUser()" class="logout-button">ログアウト</button>
+    <div class="user-info">
+      ログイン中: <span id="current-user"></span>
+    </div>
+    
+    <h1>記録一覧</h1>
+    <nav style="margin-top: 2rem; text-align: center;">
+      <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
+      <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
+      <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
+    </nav>
+    <br>
+    <label for="start-date">開始日:</label>
+    <input type="date" id="start-date">
+    <label for="end-date">終了日:</label>
+    <input type="date" id="end-date">
+    <button onclick="filterByDateRange()">検索</button>
+    <button onclick="resetFilter()">リセット</button>
+    <br><br>
+
+    <div id="loading" class="loading">データを読み込み中...</div>
+    <div id="error" class="error" style="display: none;"></div>
+
+    <!-- 削除確認ダイアログ -->
+    <div id="confirm-dialog" class="confirm-dialog">
+      <div class="confirm-dialog-content">
+        <h3>記録の削除</h3>
+        <p id="confirm-message">この記録を削除してもよろしいですか？</p>
+        <div id="confirm-details"></div>
+        <div class="confirm-dialog-buttons">
+          <button id="confirm-yes" class="confirm-yes">削除する</button>
+          <button id="confirm-no" class="confirm-no">キャンセル</button>
+        </div>
+      </div>
+    </div>
+
+    <table style="display: none;" id="data-table">
+      <thead>
+        <tr>
+          <th>日時</th>
+          <th>気分</th>
+          <th>大カテゴリ</th>
+          <th>中カテゴリ</th>
+          <th>メモ</th>
+          <th class="action-column">操作</th>
+        </tr>
+      </thead>
+      <tbody id="log-table-body"></tbody>
+    </table>
+  </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 
 <script>
-  // Firebase設定（Compatibility SDKを使用）
+  // Firebaseの設定
   const firebaseConfig = {
     apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
     authDomain: "kibunnnokiroku.firebaseapp.com",
@@ -217,12 +296,11 @@
     measurementId: "G-HRTWT7EHBP"
   };
 
-  // ⭐ 修正：Compatibility SDKの正しい初期化方法
   firebase.initializeApp(firebaseConfig);
 
-  // カテゴリデータ（記録ページと同じ）
+  // カテゴリデータ
   const categoryData = {
-    '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲みすぎ','その他'],
+    '生活習慣が原因': ['睡眠不足', '睡眠十分', '睡眠過多', '食べ過ぎ', '食事十分', '食欲不振', '運動不足', '運動十分', '飲み過ぎ','その他'],
     '仕事・学業が原因': ['仕事が忙しい','仕事が上手くいっている','タスクが多い', 'タスクが丁度いい','タスクが少ない', 'プレッシャーがある','人間関係ストレスがある','人間関係が快適','通勤ストレス','通勤が快適','その他'],
     '環境・天候が原因': ['天気が悪い','天気がいい', '暑すぎる', '寒すぎる','丁度いい','気圧変化','湿度が高い','湿度が低い','花粉','騒音','その他'],
     'ストレス、心理的要因': ['不安がある','快適である', 'イライラする','わくわくする', '憂鬱である', '心配事がある','心配事が消えた','人間関係ストレスがある','人間関係が快適','その他'],
@@ -231,7 +309,9 @@
 
   let logs = [];
   let filteredLogs = [];
-  let deleteTarget = null; // 削除対象のログ情報
+  let deleteTarget = null;
+  let currentUser = null;
+  let isInitializing = true;
 
   const tableBody = document.getElementById("log-table-body");
   const loadingDiv = document.getElementById("loading");
@@ -242,31 +322,130 @@
   const confirmYes = document.getElementById("confirm-yes");
   const confirmNo = document.getElementById("confirm-no");
 
-  // データ読み込み（エラーハンドリング強化）
+  // 認証関連の関数
+  async function loginUser() {
+    const userId = document.getElementById('user-id').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const authMessage = document.getElementById('auth-message');
+
+    if (!userId || !password) {
+      authMessage.textContent = 'ユニークIDとパスワードを入力してください。';
+      authMessage.style.color = '#dc3545';
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9]+$/.test(userId)) {
+      authMessage.textContent = 'ユニークIDは英数字のみ使用できます。';
+      authMessage.style.color = '#dc3545';
+      return;
+    }
+
+    const email = `${userId}@local.mood-tracker.com`;
+    authMessage.textContent = 'ログイン中...';
+    authMessage.style.color = '#007bff';
+
+    try {
+      await firebase.auth().signInWithEmailAndPassword(email, password);
+      authMessage.textContent = 'ログインしました！';
+      authMessage.style.color = '#28a745';
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        authMessage.textContent = 'ユーザーが見つかりません。入力ページで新規作成してください。';
+        authMessage.style.color = '#dc3545';
+      } else if (error.code === 'auth/wrong-password') {
+        authMessage.textContent = 'パスワードが正しくありません。';
+        authMessage.style.color = '#dc3545';
+      } else {
+        console.error('ログインエラー:', error);
+        authMessage.textContent = `ログインに失敗しました: ${error.message}`;
+        authMessage.style.color = '#dc3545';
+      }
+    }
+  }
+
+  function logoutUser() {
+    firebase.auth().signOut().then(() => {
+      console.log('ログアウトしました');
+    }).catch((error) => {
+      console.error('ログアウトエラー:', error);
+      alert('ログアウトに失敗しました');
+    });
+  }
+
+  // 認証状態の監視
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('main-app').classList.add('active');
+      
+      // ユーザー情報を表示
+      const displayName = user.email.split('@')[0];
+      document.getElementById('current-user').textContent = displayName;
+      
+      // データを読み込む
+      loadData();
+      
+      if (!isInitializing) {
+        console.log('ログイン成功:', displayName);
+      }
+    } else {
+      currentUser = null;
+      document.getElementById('auth-screen').style.display = 'block';
+      document.getElementById('main-app').classList.remove('active');
+      
+      if (!isInitializing) {
+        console.log('ログアウトしました');
+      }
+    }
+    isInitializing = false;
+  });
+
+  // Enterキーでログイン
+  document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      loginUser();
+    }
+  });
+  document.getElementById('user-id').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      loginUser();
+    }
+  });
+
+  // データ読み込み（認証後のユーザー別データ）
   function loadData() {
+    if (!currentUser) {
+      console.log('ユーザーが認証されていません');
+      return;
+    }
+
     console.log("Firebase からデータを読み込み中...");
     
-    firebase.database().ref("moodLogs").once("value")
+    const userId = currentUser.uid;
+    firebase.database().ref(`users/${userId}/moodLogs`).once("value")
       .then(snapshot => {
         console.log("Firebase データ取得成功");
         
         const logsData = snapshot.val() || {};
         logs = [];
         
-        snapshot.forEach(childSnapshot => {
-          logs.push({
-            key: childSnapshot.key,
-            data: childSnapshot.val()
+        if (snapshot.exists()) {
+          snapshot.forEach(childSnapshot => {
+            logs.push({
+              key: childSnapshot.key,
+              data: childSnapshot.val()
+            });
           });
-        });
+        }
         
         console.log(`${logs.length} 件のデータを読み込みました`);
         
         // 日付の降順（新しいものが上）に並び替え
         logs.sort((a, b) => {
-          const dateA = new Date(b.data.timestamp || b.data.date);
-          const dateB = new Date(a.data.timestamp || a.data.date);
-          return dateA - dateB;
+          const dateA = new Date(a.data.timestamp || a.data.date);
+          const dateB = new Date(b.data.timestamp || b.data.date);
+          return dateB - dateA;
         });
         
         // UIを更新
@@ -359,7 +538,6 @@
 
     deleteTarget = { key: logKey, data: log.data };
 
-    // 削除対象の詳細を表示
     const details = `
       <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0; text-align: left;">
         <strong>削除対象の記録:</strong><br>
@@ -383,22 +561,23 @@
 
   // 実際の削除処理
   function deleteLog() {
-    if (!deleteTarget) {
-      console.error("削除対象が設定されていません");
+    if (!deleteTarget || !currentUser) {
+      console.error("削除対象が設定されていません、またはユーザーが認証されていません");
       return;
     }
 
     const logKey = deleteTarget.key;
+    const userId = currentUser.uid;
     
     // Firebase から削除
-    firebase.database().ref("moodLogs/" + logKey).remove()
+    firebase.database().ref(`users/${userId}/moodLogs/${logKey}`).remove()
       .then(() => {
         console.log("削除成功:", logKey);
         
         // ローカルのデータからも削除
         logs = logs.filter(log => log.key !== logKey);
         
-        // テーブルを再描画（現在のフィルター状態を維持）
+        // テーブルを再描画
         const startDate = document.getElementById("start-date").value;
         const endDate = document.getElementById("end-date").value;
         
@@ -408,10 +587,7 @@
           renderTable(logs);
         }
         
-        // ダイアログを閉じる
         hideDeleteConfirm();
-        
-        // 成功メッセージ（オプション）
         alert("記録を削除しました");
       })
       .catch(error => {
@@ -423,13 +599,9 @@
 
   // 大カテゴリ変更時の処理
   function handleMajorCategoryChange(key, selectedMajorCategory, rowIndex) {
-    // 大カテゴリを更新
     updateLog(key, 'majorCategory', selectedMajorCategory);
-    
-    // 中カテゴリをリセット
     updateLog(key, 'middleCategory', '');
     
-    // 中カテゴリのプルダウンを更新
     const middleSelect = document.getElementById(`middle-${rowIndex}`);
     middleSelect.innerHTML = '<option value="">具体的には？</option>';
     
@@ -444,16 +616,22 @@
   }
 
   function updateLog(key, field, value) {
+    if (!currentUser) {
+      console.error("ユーザーが認証されていません");
+      return;
+    }
+
     const logToUpdate = logs.find(log => log.key === key);
     if (!logToUpdate) {
       console.error("更新対象のログが見つかりません:", key);
       return;
     }
     
+    const userId = currentUser.uid;
     const updatedField = { [field]: value };
 
-    // Firebase上のデータを更新
-    firebase.database().ref("moodLogs/" + key).update(updatedField)
+    // Firebaseのデータを更新
+    firebase.database().ref(`users/${userId}/moodLogs/${key}`).update(updatedField)
       .then(() => {
         // ローカルのデータも更新
         logToUpdate.data[field] = value;
@@ -462,7 +640,6 @@
       .catch(error => {
         console.error("更新失敗:", error);
         alert(`データの更新に失敗しました: ${error.message}`);
-        // 失敗した場合はページをリロード
         location.reload();
       });
   }
@@ -473,8 +650,6 @@
     
     try {
       const date = new Date(isoString);
-      
-      // 日本時間で表示
       return date.toLocaleString('ja-JP', {
         timeZone: 'Asia/Tokyo',
         year: 'numeric',
@@ -534,24 +709,16 @@
   confirmYes.addEventListener('click', deleteLog);
   confirmNo.addEventListener('click', hideDeleteConfirm);
 
-  // ダイアログの背景をクリックした場合も閉じる
   confirmDialog.addEventListener('click', function(e) {
     if (e.target === confirmDialog) {
       hideDeleteConfirm();
     }
   });
 
-  // ESCキーでダイアログを閉じる
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && confirmDialog.style.display === 'flex') {
       hideDeleteConfirm();
     }
-  });
-
-  // ページ読み込み時にデータを取得
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log("ページ読み込み完了、データ取得開始");
-    loadData();
   });
 </script>
 </body>
