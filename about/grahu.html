@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>統計グラフ</title>
+  <title>気分統計グラフ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -11,113 +11,379 @@
       background-color: #eef2f7;
       text-align: center;
     }
-    input {
-      margin: 0.5rem;
-      padding: 0.4rem;
-    }
-    canvas {
-      max-width: 700px;
+    .auth-container {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
       margin: 2rem auto;
-    }
-    nav {
-      margin-top: 2rem;
+      max-width: 400px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       text-align: center;
     }
-    nav a {
-      margin: 0 10px;
-      text-decoration: none;
-      color: #007bff;
+    .auth-input {
+      padding: 0.75rem;
+      margin: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      width: 200px;
+    }
+    .auth-button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 0.5rem;
+    }
+    .auth-button:hover {
+      background-color: #0056b3;
+    }
+    .logout-button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      float: right;
+      margin-bottom: 1rem;
+    }
+    .logout-button:hover {
+      background-color: #c82333;
+    }
+    .user-info {
+      background-color: #e7f3ff;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <nav style="margin-top: 2rem; text-align: center;">
-    <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
-    <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
-    <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
-  </nav>
-　<br>
-  <h1>気分統計グラフ（期間指定）</h1>
-  <label>開始日: <input type="date" id="startDate"></label>
-  <label>終了日: <input type="date" id="endDate"></label>
-  <button onclick="filterAndRender()">更新</button>
+  <!-- 認証画面 -->
+  <div id="auth-screen">
+    <div class="auth-container">
+      <h2>統計グラフ - ログイン</h2>
+      <p>ユニークIDとパスワードを入力してください</p>
+      <input type="text" id="user-id" class="auth-input" placeholder="ユニークID" maxlength="50">
+      <input type="password" id="password" class="auth-input" placeholder="パスワード" maxlength="50">
+      <br>
+      <button onclick="loginUser()" class="auth-button">ログイン</button>
+      <div id="auth-message" style="margin-top: 1rem; color: #666; font-size: 0.9rem;"></div>
+    </div>
+  </div>
 
-  <canvas id="moodChart"></canvas>
+  <!-- メインアプリ -->
+  <div id="main-app" class="main-app">
+    <button onclick="logoutUser()" class="logout-button">ログアウト</button>
+    <div class="user-info">
+      ログイン中: <span id="current-user"></span>
+    </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+<h1>気分統計グラフ</h1>
+    <br>
+    <nav>
+      <a href="https://yuubann.github.io/kibunnnokiroku/">入力ページ</a> |
+      <a href="https://yuubann.github.io/kibunnnokiroku/about/hyou">記録一覧</a> |
+      <a href="https://yuubann.github.io/kibunnnokiroku/about/grahu">統計グラフ</a>
+    </nav>
+    <br>
+    
+    <div style="margin-bottom: 2rem;">
+      <label>開始日: <input type="date" id="startDate"></label>
+      <label>終了日: <input type="date" id="endDate"></label>
+      <button onclick="filterAndRender()">更新</button>
+    </div>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
-    authDomain: "kibunnnokiroku.firebaseapp.com",
-    databaseURL: "https://kibunnnokiroku-default-rtdb.firebaseio.com",
-    projectId: "kibunnnokiroku",
-    storageBucket: "kibunnnokiroku.firebasestorage.app",
-    messagingSenderId: "385335029995",
-    appId: "1:385335029995:web:35728204be94704f350eae",
-    measurementId: "G-HRTWT7EHBP"
-  };
+    <!-- 折れ線グラフ -->
+    <div class="chart-container">
+      <div class="chart-title">日別平均気分スコア推移</div>
+      <canvas id="lineChart"></canvas>
+    </div>
 
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
+    <!-- 円グラフ -->
+    <div class="chart-container">
+      <div class="chart-title">気分の分布</div>
+      <canvas id="pieChart"></canvas>
+    </div>
 
-let rawLogs = [];
+    <!-- 棒グラフ -->
+    <div class="chart-container">
+      <div class="chart-title">気分選択回数</div>
+      <canvas id="barChart"></canvas>
+    </div>
+  </div>
 
-function fetchFromFirebaseAndRender() {
-  firebase.database().ref("moodLogs").once("value")
-    .then(snapshot => {
-      rawLogs = Object.values(snapshot.val() || {});
-      filterAndRender();
-    })
-    .catch(error => {
-      console.error("Firebaseからの読み込みに失敗:", error);
-      alert("データの読み込みに失敗しました。");
-      renderChart([], []); // 空のグラフを表示
+  <!-- Firebase SDK -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+
+  <script>
+    // Firebaseの設定
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDnJXHrk8iVNshBKutAtjkMJfPcT9aZ_0",
+      authDomain: "kibunnnokiroku.firebaseapp.com",
+      databaseURL: "https://kibunnnokiroku-default-rtdb.firebaseio.com",
+      projectId: "kibunnnokiroku",
+      storageBucket: "kibunnnokiroku.firebasestorage.app",
+      messagingSenderId: "385335029995",
+      appId: "1:385335029995:web:35728204be94704f350eae",
+      measurementId: "G-HRTWT7EHBP"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let rawLogs = [];
+    let lineChart, pieChart, barChart;
+    let currentUser = null;
+    let isInitializing = true;
+
+    // 認証関連の関数
+    async function loginUser() {
+      const userId = document.getElementById('user-id').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const authMessage = document.getElementById('auth-message');
+
+      if (!userId || !password) {
+        authMessage.textContent = 'ユニークIDとパスワードを入力してください。';
+        authMessage.style.color = '#dc3545';
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9]+$/.test(userId)) {
+        authMessage.textContent = 'ユニークIDは英数字のみ使用できます。';
+        authMessage.style.color = '#dc3545';
+        return;
+      }
+
+      const email = `${userId}@local.mood-tracker.com`;
+      authMessage.textContent = 'ログイン中...';
+      authMessage.style.color = '#007bff';
+
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        authMessage.textContent = 'ログインしました！';
+        authMessage.style.color = '#28a745';
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          authMessage.textContent = 'ユーザーが見つかりません。入力ページで新規作成してください。';
+          authMessage.style.color = '#dc3545';
+        } else if (error.code === 'auth/wrong-password') {
+          authMessage.textContent = 'パスワードが正しくありません。';
+          authMessage.style.color = '#dc3545';
+        } else {
+          console.error('ログインエラー:', error);
+          authMessage.textContent = `ログインに失敗しました: ${error.message}`;
+          authMessage.style.color = '#dc3545';
+        }
+      }
+    }
+
+    function logoutUser() {
+      firebase.auth().signOut().then(() => {
+        console.log('ログアウトしました');
+      }).catch((error) => {
+        console.error('ログアウトエラー:', error);
+        alert('ログアウトに失敗しました');
+      });
+    }
+
+    // 認証状態の監視
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-app').classList.add('active');
+        
+        // ユーザー情報を表示
+        const displayName = user.email.split('@')[0];
+        document.getElementById('current-user').textContent = displayName;
+        
+        // データを読み込む
+        fetchFromFirebaseAndRender();
+        
+        if (!isInitializing) {
+          console.log('ログイン成功:', displayName);
+        }
+      } else {
+        currentUser = null;
+        document.getElementById('auth-screen').style.display = 'block';
+        document.getElementById('main-app').classList.remove('active');
+        
+        if (!isInitializing) {
+          console.log('ログアウトしました');
+        }
+      }
+      isInitializing = false;
     });
-}
+
+    // Enterキーでログイン
+    document.getElementById('password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        loginUser();
+      }
+    });
+    document.getElementById('user-id').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        loginUser();
+      }
+    });
+
+    function fetchFromFirebaseAndRender() {
+      if (!currentUser) {
+        console.log('ユーザーが認証されていません');
+        return;
+      }
+
+      const userId = currentUser.uid;
+      firebase.database().ref(`users/${userId}/moodLogs`).once("value")
+        .then(snapshot => {
+          if (snapshot.exists()) {
+            rawLogs = Object.values(snapshot.val() || {});
+          } else {
+            rawLogs = [];
+          }
+          filterAndRender();
+        })
+        .catch(error => {
+          console.error("Firebaseからの読み込みに失敗:", error);
+          alert("データの読み込みに失敗しました。");
+          renderCharts([], [], [], []);
+        });
+    }
 
     function filterAndRender() {
-      const start = new Date(document.getElementById('startDate').value);
-      const end = new Date(document.getElementById('endDate').value);
-      end.setHours(23, 59, 59, 999); // include end of day
+      const startInput = document.getElementById('startDate').value;
+      const endInput = document.getElementById('endDate').value;
+      let start = startInput ? new Date(startInput + "T00:00:00+09:00") : null;
+      let end = endInput ? new Date(endInput + "T23:59:59+09:00") : null;
 
+      // フィルタリング処理
       const filtered = rawLogs.filter(log => {
-        const logDate = new Date(log.date);
-        return (!isNaN(start) && !isNaN(end)) ? logDate >= start && logDate <= end : true;
+        const logDateJST = new Date(new Date(log.date).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }));
+        return (!start || !end) ? true : (logDateJST >= start && logDateJST <= end);
       });
 
-      const moodCounts = {
-        'とても良い': 0,
-        '良い': 0,
-        '普通': 0,
-        '悪い': 0,
-        'とても悪い': 0
-      };
+      // 気分カウント
+      const moodCounts = { 'とても良い': 0, '良い': 0, '普通': 0, '悪い': 0, 'とても悪い': 0 };
+      filtered.forEach(log => { 
+        if (moodCounts[log.mood] !== undefined) moodCounts[log.mood]++; 
+      });
 
+      // 日別データ処理（折れ線グラフ用）
+      const moodScores = { 'とても悪い': 1, '悪い': 2, '普通': 3, '良い': 4, 'とても良い': 5 };
+      const dailyData = {};
       filtered.forEach(log => {
-        if (moodCounts.hasOwnProperty(log.mood)) {
-          moodCounts[log.mood]++;
+        const day = new Date(new Date(log.date).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }))
+                    .toISOString().split("T")[0];
+        if (!dailyData[day]) dailyData[day] = [];
+        dailyData[day].push(moodScores[log.mood] || 0);
+      });
+
+      // 日付範囲生成（欠けた日も補完）
+      const allDates = [];
+      if (filtered.length > 0) {
+        let current = start 
+          ? new Date(start) 
+          : new Date(Math.min(...filtered.map(l => new Date(l.date))));
+        let last = end 
+          ? new Date(end) 
+          : new Date(Math.max(...filtered.map(l => new Date(l.date))));
+
+        while (current <= last) {
+          const isoDate = current.toISOString().split("T")[0];
+          allDates.push(isoDate);
+          current.setDate(current.getDate() + 1);
+        }
+      }
+
+      // 日別平均算出（前回値で補間）
+      let lastValue = null;
+      const dailyAverages = allDates.map(date => {
+        if (dailyData[date]) {
+          const scores = dailyData[date];
+          lastValue = scores.reduce((a,b) => a+b, 0) / scores.length;
+        }
+        return lastValue !== null ? lastValue : 3;
+      });
+
+      renderCharts(
+        allDates, dailyAverages,
+        Object.keys(moodCounts), Object.values(moodCounts)
+      );
+    }
+
+    function renderCharts(lineLabels, lineData, moodLabels, moodData) {
+      const lineCtx = document.getElementById('lineChart').getContext('2d');
+      const pieCtx = document.getElementById('pieChart').getContext('2d');
+      const barCtx = document.getElementById('barChart').getContext('2d');
+
+      // 既存のチャートを破棄
+      if (lineChart) lineChart.destroy();
+      if (pieChart) pieChart.destroy();
+      if (barChart) barChart.destroy();
+
+      // 折れ線グラフ
+      lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: lineLabels,
+          datasets: [{
+            label: '平均気分スコア（1〜5）',
+            data: lineData,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { 
+            y: { 
+              min: 1, 
+              max: 5, 
+              ticks: { stepSize: 1 }
+            }
+          }
         }
       });
 
-      renderChart(Object.keys(moodCounts), Object.values(moodCounts));
-    }
+      // 円グラフ
+      pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+          labels: moodLabels,
+          datasets: [{
+            data: moodData,
+            backgroundColor: ['#4caf50', '#8bc34a', '#ffc107', '#ff9800', '#f44336']
+          }]
+        },
+        options: { 
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
 
-    let chart;
-
-    function renderChart(labels, data) {
-      const ctx = document.getElementById('moodChart').getContext('2d');
-
-      if (chart) chart.destroy(); // 再描画のため一度破棄
-
-      chart = new Chart(ctx, {
+      // 棒グラフ
+      barChart = new Chart(barCtx, {
         type: 'bar',
         data: {
-          labels,
+          labels: moodLabels,
           datasets: [{
             label: '選択回数',
-            data,
+            data: moodData,
             backgroundColor: ['#4caf50', '#8bc34a', '#ffc107', '#ff9800', '#f44336']
           }]
         },
@@ -132,9 +398,52 @@ function fetchFromFirebaseAndRender() {
         }
       });
     }
-
-    // 初期描画（全期間）
-    window.onload = () => fetchFromFirebaseAndRender();
   </script>
 </body>
 </html>
+      margin: 0.5rem;
+      padding: 0.4rem;
+    }
+    button {
+      margin: 0.5rem;
+      padding: 0.4rem 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .chart-container {
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .chart-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+    nav {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #007bff;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .main-app {
+      display: none;
+    }
+    .main-app.active {
+      display: block;
