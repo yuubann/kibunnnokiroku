@@ -343,19 +343,24 @@
             } catch (error) {
                 console.error('❌ ログインエラー:', error);
                 
-                if (error.code === 'auth/user-not-found') {
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-login-credentials') {
                     try {
-                        // ユーザーが存在しない場合は新規作成
-                        console.log('🆕 新規ユーザー作成:', email);
+                        // ユーザーが存在しない可能性があるので新規作成を試行
+                        console.log('🆕 新規ユーザー作成を試行:', email);
                         await firebase.auth().createUserWithEmailAndPassword(email, password);
                         authMessage.textContent = '新しいアカウントを作成してログインしました！';
                         authMessage.style.color = '#28a745';
                     } catch (createError) {
                         console.error('❌ アカウント作成エラー:', createError);
-                        authMessage.textContent = `アカウント作成に失敗しました: ${createError.message}`;
+                        if (createError.code === 'auth/email-already-in-use') {
+                            // アカウントは存在するがパスワードが間違っている
+                            authMessage.textContent = 'パスワードが正しくありません。';
+                        } else {
+                            authMessage.textContent = `アカウント作成に失敗しました: ${createError.message}`;
+                        }
                         authMessage.style.color = '#dc3545';
                     }
-                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-login-credentials') {
+                } else if (error.code === 'auth/wrong-password') {
                     authMessage.textContent = 'パスワードが正しくありません。';
                     authMessage.style.color = '#dc3545';
                 } else if (error.code === 'auth/operation-not-allowed') {
