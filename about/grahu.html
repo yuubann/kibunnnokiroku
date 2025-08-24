@@ -154,15 +154,15 @@
       <canvas id="lineChart"></canvas>
     </div>
 
-    <!-- 円グラフ -->
+    <!-- 円グラフ（大カテゴリ） -->
     <div class="chart-container">
-      <div class="chart-title">気分の分布</div>
+      <div class="chart-title">原因の大カテゴリ別分布</div>
       <canvas id="pieChart"></canvas>
     </div>
 
-    <!-- 棒グラフ -->
+    <!-- 横棒グラフ（小カテゴリ） -->
     <div class="chart-container">
-      <div class="chart-title">気分選択回数</div>
+      <div class="chart-title">小カテゴリ別選択回数（上位15項目）</div>
       <canvas id="barChart"></canvas>
     </div>
   </div>
@@ -303,7 +303,7 @@
         .catch(error => {
           console.error("Firebaseからの読み込みに失敗:", error);
           alert("データの読み込みに失敗しました。");
-          renderCharts([], [], [], []);
+          renderCharts([], [], [], [], [], []);
         });
     }
 
@@ -317,12 +317,6 @@
       const filtered = rawLogs.filter(log => {
         const logDateJST = new Date(new Date(log.date).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }));
         return (!start || !end) ? true : (logDateJST >= start && logDateJST <= end);
-      });
-
-      // 気分カウント
-      const moodCounts = { 'とても良い': 0, '良い': 0, '普通': 0, '悪い': 0, 'とても悪い': 0 };
-      filtered.forEach(log => { 
-        if (moodCounts[log.mood] !== undefined) moodCounts[log.mood]++; 
       });
 
       // 日別データ処理（折れ線グラフ用）
@@ -362,13 +356,46 @@
         return lastValue !== null ? lastValue : 3;
       });
 
+      // 大カテゴリ集計
+      const majorCategoryCounts = {};
+      filtered.forEach(log => {
+        if (log.majorCategory && log.majorCategory.trim() !== '') {
+          if (majorCategoryCounts[log.majorCategory]) {
+            majorCategoryCounts[log.majorCategory]++;
+          } else {
+            majorCategoryCounts[log.majorCategory] = 1;
+          }
+        }
+      });
+
+      // 小カテゴリ集計
+      const middleCategoryCounts = {};
+      filtered.forEach(log => {
+        if (log.middleCategory && log.middleCategory.trim() !== '') {
+          if (middleCategoryCounts[log.middleCategory]) {
+            middleCategoryCounts[log.middleCategory]++;
+          } else {
+            middleCategoryCounts[log.middleCategory] = 1;
+          }
+        }
+      });
+
+      // 小カテゴリを選択回数順にソートして上位15項目を取得
+      const sortedMiddleCategories = Object.entries(middleCategoryCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15);
+
       renderCharts(
-        allDates, dailyAverages,
-        Object.keys(moodCounts), Object.values(moodCounts)
+        allDates, 
+        dailyAverages,
+        Object.keys(majorCategoryCounts), 
+        Object.values(majorCategoryCounts),
+        sortedMiddleCategories.map(item => item[0]),
+        sortedMiddleCategories.map(item => item[1])
       );
     }
 
-    function renderCharts(lineLabels, lineData, moodLabels, moodData) {
+    function renderCharts(lineLabels, lineData, majorCategoryLabels, majorCategoryData, middleCategoryLabels, middleCategoryData) {
       const lineCtx = document.getElementById('lineChart').getContext('2d');
       const pieCtx = document.getElementById('pieChart').getContext('2d');
       const barCtx = document.getElementById('barChart').getContext('2d');
@@ -384,7 +411,7 @@
         data: {
           labels: lineLabels,
           datasets: [{
-            label: '平均気分スコア（1〜5）',
+            label: '平均気分スコア（1～5）',
             data: lineData,
             borderColor: '#007bff',
             backgroundColor: 'rgba(0, 123, 255, 0.2)',
@@ -404,14 +431,19 @@
         }
       });
 
-      // 円グラフ
+      // 円グラフ（大カテゴリ）
+      const majorCategoryColors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+      ];
+      
       pieChart = new Chart(pieCtx, {
         type: 'pie',
         data: {
-          labels: moodLabels,
+          labels: majorCategoryLabels,
           datasets: [{
-            data: moodData,
-            backgroundColor: ['#4caf50', '#8bc34a', '#ffc107', '#ff9800', '#f44336']
+            data: majorCategoryData,
+            backgroundColor: majorCategoryColors.slice(0, majorCategoryLabels.length)
           }]
         },
         options: { 
@@ -424,23 +456,35 @@
         }
       });
 
-      // 棒グラフ
+      // 横棒グラフ（小カテゴリ）
+      const middleCategoryColors = middleCategoryData.map((_, index) => 
+        `hsl(${(index * 360 / middleCategoryData.length)}, 70%, 60%)`
+      );
+
       barChart = new Chart(barCtx, {
         type: 'bar',
         data: {
-          labels: moodLabels,
+          labels: middleCategoryLabels,
           datasets: [{
             label: '選択回数',
-            data: moodData,
-            backgroundColor: ['#4caf50', '#8bc34a', '#ffc107', '#ff9800', '#f44336']
+            data: middleCategoryData,
+            backgroundColor: middleCategoryColors,
+            borderColor: middleCategoryColors.map(color => color.replace('60%', '40%')),
+            borderWidth: 1
           }]
         },
         options: {
+          indexAxis: 'y', // 横棒グラフにする
           responsive: true,
           scales: {
-            y: {
+            x: {
               beginAtZero: true,
               ticks: { stepSize: 1 }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
             }
           }
         }
