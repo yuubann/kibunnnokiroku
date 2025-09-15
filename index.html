@@ -193,6 +193,9 @@
                 <br>
                 <button onclick="loginUser()" id="login-btn" class="auth-button">ログイン / 新規作成</button>
                 <div id="auth-message" style="margin-top: 1rem; color: #666; font-size: 0.9rem;"></div>
+                <button onclick="loginWithGoogle()" class="auth-button" style="background:#db4437;">
+  Googleでログイン
+</button>
             </div>
         </div>
 
@@ -408,6 +411,22 @@
                 alert('ログアウトに失敗しました');
             });
         }
+        // Googleログイン処理
+function loginWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .then((result) => {
+      const user = result.user;
+      console.log("✅ Googleログイン成功:", user.email);
+      document.getElementById('auth-message').textContent = "Googleログイン成功！";
+      document.getElementById('auth-message').style.color = "#28a745";
+    })
+    .catch((error) => {
+      console.error("❌ Googleログインエラー:", error);
+      document.getElementById('auth-message').textContent = `ログイン失敗: ${error.message}`;
+      document.getElementById('auth-message').style.color = "#dc3545";
+    });
+}
 
         // 認証状態の監視
         firebase.auth().onAuthStateChanged((user) => {
